@@ -7,7 +7,7 @@ int main(){
     char *token;
     unsigned int num_colunas = 0;
 
-    printf("Digite o texto:\n");
+    printf("Digite o texto:");
     fgets(texto, sizeof(texto), stdin);
 
     texto[strcspn(texto, "\n")] = '\0';
