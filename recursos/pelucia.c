@@ -1,21 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include "pelucia.h"
-
-//
-//struct maquina_pelucia {
-//    unsigned int id;
-//    unsigned int probabilidade;
-//
-//    struct maquina_pelucia *proximo;
-//    struct maquina_pelucia *anterior;
-//};
-//
-//struct loja {
-//	struct maquina_pelucia *inicio;
-//	unsigned int numero_maquinas;
-//};
-//
 
 int aleat (int min, int max)
 {
@@ -23,42 +9,44 @@ int aleat (int min, int max)
 }
 
 void insere_maquina(struct loja *loja, struct maquina_pelucia *maquina){
+    if (!loja || !maquina)
+        return;
+    //primeira máquina
     if (!loja->inicio){
         loja->inicio = maquina;
+        maquina->proximo = maquina;
+        maquina->anterior = maquina;
+        loja->numero_maquinas++;
         return;
     }
-    
-    //somente uma maquina adicionada
-    if (!loja->inicio->proximo){
-        loja->inicio->proximo = maquina;
-        loja->inicio->anterior = maquina;
+
+    struct maquina_pelucia *i = loja->inicio;
+
+    if (maquina->probabilidade > loja->inicio->probabilidade){
         maquina->proximo = loja->inicio;
-        maquina->anterior = loja->inicio;
-        //corrige se o inserido foi posto fora de ordem
-        if (loja->inicio->probabilidade < maquina->probabilidade)
-            loja->inicio = loja->inicio->proximo;
-
+        maquina->anterior = loja->inicio->anterior;
+        loja->inicio->anterior->proximo = maquina;
+        loja->inicio->anterior = maquina;
+        //atualiza inicio
+        loja->inicio = maquina;
+        loja->numero_maquinas++;
         return;
     }
 
-    struct maquina_pelucia *i;
+    //procura posicao para inserir
+    while (i->proximo != loja->inicio && maquina->probabilidade <= i->proximo->probabilidade)
+        i = i->proximo;
 
-    //conferir se nao entra em laco com duas maquinas na mesma probabilidade
-
-    //acha a posicao correta para por a maquina
-    for (i = loja->inicio; ((i->proximo != loja->inicio) && (maquina->probabilidade <= i->probabilidade)); i = i->proximo);
-
-    maquina->proximo = i;
-    maquina->anterior = i->anterior;
-    i->anterior->proximo = maquina;
-    i->anterior = maquina;
-
-    return;
+    maquina->proximo = i->proximo;
+    maquina->anterior = i;
+    i->proximo->anterior = maquina;
+    i->proximo = maquina;
+    loja->numero_maquinas++;
 }
+
 
 void criar_maquinas(unsigned int numero_maquinas, struct loja *loja){
     struct maquina_pelucia *maquina;
-    
     
     for (int i = 1; i <= numero_maquinas; i++){
         if (! (maquina = malloc(sizeof(struct maquina_pelucia))) )
@@ -80,50 +68,41 @@ struct loja* criar_loja (unsigned int numero_maquinas){
     struct loja* loja;
     if (! (loja = malloc(sizeof(struct loja))) )
         return NULL;
+
+    srand(time(NULL));
     
-    loja->numero_maquinas = numero_maquinas;
+    loja->inicio = NULL;
+    loja->numero_maquinas = 0;
     criar_maquinas(numero_maquinas,loja);
-
-    
-    struct maquina_pelucia *atual;
-    atual = loja->inicio;
-    printf("maquinas: %u", atual->id);
-
-    if (loja->numero_maquinas > 1){
-        atual = atual->proximo;
-        while(atual->id != loja->inicio->id){
-            printf(" %d", atual->id);
-            atual = atual->proximo;
-        }
-    }
 
     return loja;
 }
 
 void remove_maquina(struct maquina_pelucia *maquina, struct loja *loja){
-    struct maquina_pelucia *iterador;
-    iterador = loja->inicio;
-    //somente uma maquina
+    if (!maquina || !loja || !loja->inicio) return;
+
     if (loja->numero_maquinas == 1){
         loja->inicio = NULL;
-        loja->numero_maquinas--;
+        loja->numero_maquinas = 0;
         free(maquina);
         return;
     }
 
-    //ajusta o ponteiro auxiliar para a remocao
-    while (iterador->id != maquina->id)
-        iterador = iterador->proximo;
+    //se remover a primeira maquina
+    if (loja->inicio == maquina){
+        loja->inicio = maquina->proximo;
+    }
 
-    iterador->anterior->proximo = iterador->proximo;
-    iterador->proximo->anterior = iterador->anterior;
-    free(iterador);
+    maquina->anterior->proximo = maquina->proximo;
+    maquina->proximo->anterior = maquina->anterior;
 
-    return;
+    loja->numero_maquinas--;
+    free(maquina);
 }
 
+
 int jogar (struct loja *loja){
-    if (!loja || !loja->inicio)
+    if (!loja || !loja->inicio || !loja->numero_maquinas)
         return -1;
 
     int jogada = aleat(0,100);
@@ -132,33 +111,43 @@ int jogar (struct loja *loja){
     int iterador = 1;
     struct maquina_pelucia *it;
     it = loja->inicio;
-    while (iterador < maquina)
+    while (iterador < maquina){
+        iterador++;
         it = it->proximo;
+    }
 
     if (jogada < it->probabilidade){
         remove_maquina(it,loja);
         return 1;
     } else return 0;
 }
-//imprimir maquinas que restam na lista
+
 void encerrar_dia (struct loja *loja){
     if (!loja || !loja->numero_maquinas)
         return;
     
     struct maquina_pelucia *atual;
     atual = loja->inicio;
-    printf("maquinas: %d", atual->id);
+    printf("maquinas|prob: (%u|%3u)", atual->id, atual->probabilidade);
 
     if (loja->numero_maquinas > 1){
         atual = atual->proximo;
-        while(atual->id != loja->inicio->id){
-            printf(" %d", atual->id);
+        while(atual != loja->inicio){
+            printf(" (%u|%3u)", atual->id, atual->probabilidade);
             atual = atual->proximo;
         }
     }
+    printf("\n");
     return;
 }
 
 void destruir_loja (struct loja *loja){
+    if (!loja)
+        return;
 
+    while (loja->numero_maquinas > 0)
+        remove_maquina(loja->inicio, loja);
+
+    free(loja);
+    return;
 }
