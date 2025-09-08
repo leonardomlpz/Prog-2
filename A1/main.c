@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include "gbv.h"
 
 int main(int argc, char *argv[]) {
@@ -12,6 +13,14 @@ int main(int argc, char *argv[]) {
     const char *biblioteca = argv[2];
 
     Library lib;
+
+    if (access(biblioteca, F_OK) != 0) {
+        if (gbv_create(biblioteca) != 0) {
+            fprintf(stderr, "Erro ao criar biblioteca %s\n", biblioteca);
+            return 1;
+        }
+    }
+
     if (gbv_open(&lib, biblioteca) != 0) {
         printf("Erro ao abrir biblioteca %s\n", biblioteca);
         return 1;
