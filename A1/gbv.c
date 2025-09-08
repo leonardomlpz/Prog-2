@@ -61,3 +61,98 @@ int gbv_open(Library *lib, const char *filename){
     fclose(fp);
     return 0;
 }
+
+int gbv_add(Library *lib, const char *archive, const char *docname){
+    FILE *src = fopen(docname,"rb");
+    if (!src){
+        perror("Erro ao abrir documento");
+        return -1;
+    }
+
+    FILE *dst = fopen(archive,"rb+");
+    if (!dst){
+        perror("Erro ao abrir biblioteca");
+        fclose(dst);
+        return -1;
+    }
+
+    SuperBlock sb;
+    fread(&sb, sizeof(SuperBlock), 1, dst);
+
+    // Descobre o tam do doc
+    fseek(src, 0, SEEK_END);
+    long size = ftell(src);
+    // Volta para o inicio para copiar
+    rewind(src);
+
+    Document doc;
+    strncpy(doc.name, docname, MAX_NAME);
+    doc.size = size;
+    doc.date = time(NULL);
+    // Local onde termina o diretorio
+    doc.offset = sb.dir_offset;
+
+
+    static char buffer1[BUFFER_SIZE];
+    size_t n;
+
+    // Pula ate onde comeca o diretorio
+    fseek(dst, sb.dir_offset, SEEK_SET);
+    while ((n = fread(buffer1, 1, BUFFER_SIZE, src)) > 0)
+        fwrite(buffer1, 1, n, dst);
+
+    // Atualizar a biblioteca na memoria
+    lib->docs = realloc(lib->docs, (lib->count + 1) * sizeof(Document));
+    lib->docs[lib->count] = doc;
+    lib->count++;
+
+    // Atualizar o SuperBloco
+    sb.count = lib->count;
+    // Diretorio comeca apos os dados que acabou de escrever
+    sb.dir_offset = ftell(dst);
+
+    // Regravar SuperBloco no inicio do arquivo
+    fseek(dst, 0, SEEK_SET);
+    fwrite(&sb, sizeof(Document), 1, dst);
+
+    // Gravar o diretorio atualizado no final do arquivo
+    fseek(dst, sb.dir_offset, SEEK_SET);
+    fwrite(lib->docs, sizeof(Document), lib->count, dst);
+
+    fclose(src);
+    fclose(dst);
+    return 0;
+}
+
+int gbv_list(const Library *lib) {
+    if (lib->count == 0) {
+        printf("Biblioteca vazia.\n");
+        return 0;
+    }
+
+    for (int i = 0; i < lib->count; i++) {
+        Document d = lib->docs[i];
+        printf("Nome: %s\n", d.name);
+        printf("Tamanho: %ld bytes\n", d.size);
+        printf("Data: %s", ctime(&d.date));  // ctime já coloca \n
+        printf("Offset: %ld\n", d.offset);
+        printf("---------------------------\n");
+    }
+
+    return 0;
+}
+
+int gbv_remove(Library *lib, const char *docname) {
+    printf("Função gbv_remove ainda não implementada.\n");
+    return 0;
+}
+
+int gbv_view(const Library *lib, const char *docname) {
+    printf("Função gbv_view ainda não implementada.\n");
+    return 0;
+}
+
+int gbv_order(Library *lib, const char *archive, const char *criteria) {
+    printf("Função gbv_order ainda não implementada.\n");
+    return 0;
+}
