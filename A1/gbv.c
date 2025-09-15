@@ -148,10 +148,43 @@ int gbv_remove(Library *lib, const char *docname) {
 }
 
 int gbv_view(const Library *lib, const char *docname) {
-    printf("Função gbv_view ainda não implementada.\n");
+    FILE *fp = fopen(docname,"rb");
+    if (!fp){
+        perror("Erro ao abirir arquivo");
+        return -1;
+    }
+
+    //DEFINIR TAMANHO DO BLOCO FIXO
+
+    char opcao;
+    do{
+        printf("Opcoes: n -> prox bloco;\np -> bloco anterior;\nq -> sair\n");
+        scanf("%c", opcao);
+
+        switch (opcao){
+            case 'n':
+            /* code */
+            break;
+
+            case 'p':
+            //codigo
+            break;
+        
+            case 'q':
+            fclose(fp);
+            break;
+
+            default:
+            break;
+        }
+
+    }while (opcao != 'q');
+
+    fclose(fp);
     return 0;
 }
 
+//  IGNORAR ESSA FUNCAO
 int gbv_order(Library *lib, const char *archive, const char *criteria) {
     printf("Função gbv_order ainda não implementada.\n");
     return 0;
