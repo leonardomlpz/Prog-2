@@ -148,30 +148,61 @@ int gbv_remove(Library *lib, const char *docname) {
 }
 
 int gbv_view(const Library *lib, const char *docname) {
-    FILE *fp = fopen(docname,"rb");
-    if (!fp){
-        perror("Erro ao abirir arquivo");
+    // procurar diretorio na memoria
+    Document *doc = NULL;
+    for (int i = 0; i < lib->count; i++){
+        if (strcmp(lib->docs[i].name, docname) == 0){
+            doc = &lib->docs[i];
+            break;
+        }
+    }
+    if (!doc){
+        printf("Documento %s nao encontrado.\n",docname);
         return -1;
     }
 
-    //DEFINIR TAMANHO DO BLOCO FIXO
+    FILE *fp = fopen("minha.gbv","rb");
+    if (!fp){
+        perror("Erro ao abirir container");
+        return -1;
+    }
+
+    static char buffer[BUFFER_SIZE];
+    long pos = 0; // posicao atual no doc
 
     char opcao;
     do{
-        printf("Opcoes: n -> prox bloco;\np -> bloco anterior;\nq -> sair\n");
-        scanf("%c", opcao);
+        // calcular quanto ainda falta do documento
+        long remaining = doc->size - pos;
+        size_t to_read = (remaining < BUFFER_SIZE) ? remaining : BUFFER_SIZE;
+
+        // andar para o bloco correto dentro do container
+        fseek(fp, doc->offset + pos, SEEK_SET);
+        size_t n = fread(buffer, 1, to_read, fp);
+
+        fwrite(buffer, 1, n, stdout);
+        printf("\n---- FIM DO BLOCO ----\n");
+
+        printf("Opcoes: n -> prox bloco;\n        p -> bloco anterior;\n        q -> sair\n");
+        scanf("%c", &opcao);
+        getchar();
 
         switch (opcao){
             case 'n':
-            /* code */
+            if (pos + BUFFER_SIZE < doc->size)
+                pos += BUFFER_SIZE;
+            else
+                printf("Fim do documento.\n");
             break;
 
             case 'p':
-            //codigo
+                if (pos - BUFFER_SIZE >= 0)
+                    pos -= BUFFER_SIZE;
+                else
+                    printf("Esta no inicio.\n");
             break;
         
             case 'q':
-            fclose(fp);
             break;
 
             default:
