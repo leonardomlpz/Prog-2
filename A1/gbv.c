@@ -113,7 +113,7 @@ int gbv_add(Library *lib, const char *archive, const char *docname){
 
     // Regravar SuperBloco no inicio do arquivo
     fseek(dst, 0, SEEK_SET);
-    fwrite(&sb, sizeof(Document), 1, dst);
+    fwrite(&sb, sizeof(SuperBlock), 1, dst);
 
     // Gravar o diretorio atualizado no final do arquivo
     fseek(dst, sb.dir_offset, SEEK_SET);
@@ -161,57 +161,57 @@ int gbv_view(const Library *lib, const char *docname) {
         return -1;
     }
 
-    FILE *fp = fopen("minha.gbv","rb");
-    if (!fp){
-        perror("Erro ao abirir container");
-        return -1;
-    }
-
-    static char buffer[BUFFER_SIZE];
-    long pos = 0; // posicao atual no doc
-
-    char opcao;
-    do{
-        // calcular quanto ainda falta do documento
-        long remaining = doc->size - pos;
-        size_t to_read = (remaining < BUFFER_SIZE) ? remaining : BUFFER_SIZE;
-
-        // andar para o bloco correto dentro do container
-        fseek(fp, doc->offset + pos, SEEK_SET);
-        size_t n = fread(buffer, 1, to_read, fp);
-
-        fwrite(buffer, 1, n, stdout);
-        printf("\n---- FIM DO BLOCO ----\n");
-
-        printf("Opcoes: n -> prox bloco;\n        p -> bloco anterior;\n        q -> sair\n");
-        scanf("%c", &opcao);
-        getchar();
-
-        switch (opcao){
-            case 'n':
-            if (pos + BUFFER_SIZE < doc->size)
-                pos += BUFFER_SIZE;
-            else
-                printf("Fim do documento.\n");
-            break;
-
-            case 'p':
-                if (pos - BUFFER_SIZE >= 0)
-                    pos -= BUFFER_SIZE;
-                else
-                    printf("Esta no inicio.\n");
-            break;
-        
-            case 'q':
-            break;
-
-            default:
-            break;
-        }
-
-    }while (opcao != 'q');
-
-    fclose(fp);
+//    FILE *fp = fopen("minha.gbv","rb");
+//    if (!fp){
+//        perror("Erro ao abirir container");
+//        return -1;
+//    }
+//
+//    static char buffer[BUFFER_SIZE];
+//    long pos = 0; // posicao atual no doc
+//
+//    char opcao;
+//    do{
+//        // calcular quanto ainda falta do documento
+//        long remaining = doc->size - pos;
+//        size_t to_read = (remaining < BUFFER_SIZE) ? remaining : BUFFER_SIZE;
+//
+//        // andar para o bloco correto dentro do container
+//        fseek(fp, doc->offset + pos, SEEK_SET);
+//        size_t n = fread(buffer, 1, to_read, fp);
+//
+//        fwrite(buffer, 1, n, stdout);
+//        printf("\n---- FIM DO BLOCO ----\n");
+//
+//        printf("Opcoes: n -> prox bloco;\n        p -> bloco anterior;\n        q -> sair\n");
+//        scanf("%c", &opcao);
+//        getchar();
+//
+//        switch (opcao){
+//            case 'n':
+//            if (pos + BUFFER_SIZE < doc->size)
+//                pos += BUFFER_SIZE;
+//            else
+//                printf("Fim do documento.\n");
+//            break;
+//
+//            case 'p':
+//                if (pos - BUFFER_SIZE >= 0)
+//                    pos -= BUFFER_SIZE;
+//                else
+//                    printf("Esta no inicio.\n");
+//            break;
+//        
+//            case 'q':
+//            break;
+//
+//            default:
+//            break;
+//        }
+//
+//    }while (opcao != 'q');
+//
+//    fclose(fp);
     return 0;
 }
 
