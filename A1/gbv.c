@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "gbv.h"
+#include "util.h"
 
 typedef struct {
     int count;
@@ -132,9 +133,13 @@ int gbv_list(const Library *lib) {
 
     for (int i = 0; i < lib->count; i++) {
         Document d = lib->docs[i];
+        char date[50];
+
+        format_date(d.date, date, 50);
+
         printf("Nome: %s\n", d.name);
         printf("Tamanho: %ld bytes\n", d.size);
-        printf("Data: %s", ctime(&d.date));  // ctime já coloca \n
+        printf("Data: %s\n", date);
         printf("Offset: %ld\n", d.offset);
         printf("---------------------------\n");
     }
