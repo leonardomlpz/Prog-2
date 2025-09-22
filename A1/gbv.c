@@ -182,6 +182,19 @@ int gbv_remove(Library *lib, const char *archive, const char *docname) {
         return -1;
     }
 
+    // Reescreve o superbloco
+    SuperBlock sb;
+    fseek(fp, 0, SEEK_SET);
+    fread(&sb, sizeof(SuperBlock), 1, fp);
+    sb.count = lib->count;
+
+    fseek(fp, 0, SEEK_SET);
+    fwrite(&sb, sizeof(SuperBlock), 1, fp);
+
+    fseek(fp, sb.dir_offset, SEEK_SET);
+    fwrite(lib->docs, sizeof(Document), lib->count, fp);
+
+    fclose(fp);
     return 0;
 }
 
