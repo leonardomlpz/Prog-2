@@ -147,8 +147,41 @@ int gbv_list(const Library *lib) {
     return 0;
 }
 
-int gbv_remove(Library *lib, const char *docname) {
-    printf("Função gbv_remove ainda não implementada.\n");
+int gbv_remove(Library *lib, const char *archive, const char *docname) {
+    if (!lib || !archive || !docname)
+        return -1;
+
+    int remove = -1;
+    for (int i = 0; i < lib->count; i++){
+        if (strcmp(lib->docs[i].name, docname) == 0){
+            remove = i;
+            break;
+        }
+    }
+    if (remove == -1){
+        printf("Documento %s nao encontrado.\n", docname);
+        return -1;
+    }
+
+    for (int i = remove; i < (lib->count - 1); i++){
+        lib->docs[i] = lib->docs[i+1];
+    }
+    lib->count--;
+
+    size_t new_size_docs = lib->count * sizeof(Document);
+    Document *temp = realloc(lib->docs, new_size_docs);
+
+    if (temp != NULL || lib->count == 0)
+        lib->docs = temp;
+    else
+        perror("Erro ao tentar diminuir diretorio");
+
+    FILE *fp = fopen(archive,"rb+");
+    if (!fp){
+        perror("Erro ao abrir container");
+        return -1;
+    }
+
     return 0;
 }
 
