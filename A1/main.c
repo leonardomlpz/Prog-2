@@ -52,6 +52,7 @@ int main(int argc, char *argv[]) {
         printf("Opção inválida.\n");
     }
 
+    gbv_close();
     return 0;
 }
 

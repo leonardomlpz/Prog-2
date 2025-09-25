@@ -72,6 +72,7 @@ int gbv_add(Library *lib, const char *archive, const char *docname){
     }
 
     SuperBlock sb;
+    fseek(open_gbv, 0, SEEK_SET);
     fread(&sb, sizeof(SuperBlock), 1, open_gbv);
 
     // Descobre o tam do doc
