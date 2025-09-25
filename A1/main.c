@@ -3,6 +3,8 @@
 #include <unistd.h>
 #include "gbv.h"
 
+void gbv_close();
+
 int main(int argc, char *argv[]) {
     if (argc < 3) {
         printf("Uso: %s <opção> <biblioteca> [documentos...]\n", argv[0]);
@@ -41,7 +43,7 @@ int main(int argc, char *argv[]) {
         gbv_list(&lib);
 
     } else if (strcmp(opcao, "-v") == 0 && argc >= 4) {
-        gbv_view(&lib, biblioteca, argv[3]);
+        gbv_view(&lib, argv[3]);
 
     } else if (strcmp(opcao, "-o") == 0 && argc >= 4) {
         gbv_order(&lib, biblioteca, argv[3]);

@@ -4,6 +4,8 @@
 #include "gbv.h"
 #include "util.h"
 
+static FILE *open_gbv = NULL;
+
 typedef struct {
     int count;
     long dir_offset;
@@ -30,16 +32,16 @@ int gbv_create(const char *filename){
 }
 
 int gbv_open(Library *lib, const char *filename){
-    FILE *fp = fopen(filename, "rb");
-    if (!fp){
+    open_gbv = fopen(filename, "rb+");
+    if (!open_gbv){
         perror("Erro ao abrir o arquivo");
         return -1;
     }
 
     SuperBlock sb;
-    if (fread(&sb, sizeof(SuperBlock), 1, fp) != 1){
+    if (fread(&sb, sizeof(SuperBlock), 1, open_gbv) != 1){
         perror("Erro ao ler superbloco");
-        fclose(fp);
+        fclose(open_gbv);
         return -1;
     }
 
@@ -47,19 +49,18 @@ int gbv_open(Library *lib, const char *filename){
     lib->docs = malloc(sb.count * sizeof(Document));
     if (!lib->docs && sb.count > 0){
         perror("Erro ao alocar memoria");
-        fclose(fp);
+        fclose(open_gbv);
         return -1;
     }
 
-    fseek(fp, sb.dir_offset, SEEK_SET);
-    if (fread(lib->docs, sizeof(Document), sb.count, fp) != (size_t)sb.count){
+    fseek(open_gbv, sb.dir_offset, SEEK_SET);
+    if (fread(lib->docs, sizeof(Document), sb.count, open_gbv) != (size_t)sb.count){
         perror("Erro ao ler diretorio");
         free(lib->docs);
-        fclose(fp);
+        fclose(open_gbv);
         return -1;
     }
 
-    fclose(fp);
     return 0;
 }
 
@@ -70,15 +71,8 @@ int gbv_add(Library *lib, const char *archive, const char *docname){
         return -1;
     }
 
-    FILE *dst = fopen(archive,"rb+");
-    if (!dst){
-        perror("Erro ao abrir biblioteca");
-        fclose(dst);
-        return -1;
-    }
-
     SuperBlock sb;
-    fread(&sb, sizeof(SuperBlock), 1, dst);
+    fread(&sb, sizeof(SuperBlock), 1, open_gbv);
 
     // Descobre o tam do doc
     fseek(src, 0, SEEK_END);
@@ -98,9 +92,9 @@ int gbv_add(Library *lib, const char *archive, const char *docname){
     size_t n;
 
     // Pula ate onde comeca o diretorio
-    fseek(dst, sb.dir_offset, SEEK_SET);
+    fseek(open_gbv, sb.dir_offset, SEEK_SET);
     while ((n = fread(buffer1, 1, BUFFER_SIZE, src)) > 0)
-        fwrite(buffer1, 1, n, dst);
+        fwrite(buffer1, 1, n, open_gbv);
 
     // Atualizar a biblioteca na memoria
     lib->docs = realloc(lib->docs, (lib->count + 1) * sizeof(Document));
@@ -110,18 +104,17 @@ int gbv_add(Library *lib, const char *archive, const char *docname){
     // Atualizar o SuperBloco
     sb.count = lib->count;
     // Diretorio comeca apos os dados que acabou de escrever
-    sb.dir_offset = ftell(dst);
+    sb.dir_offset = ftell(open_gbv);
 
     // Regravar SuperBloco no inicio do arquivo
-    fseek(dst, 0, SEEK_SET);
-    fwrite(&sb, sizeof(SuperBlock), 1, dst);
+    fseek(open_gbv, 0, SEEK_SET);
+    fwrite(&sb, sizeof(SuperBlock), 1, open_gbv);
 
     // Gravar o diretorio atualizado no final do arquivo
-    fseek(dst, sb.dir_offset, SEEK_SET);
-    fwrite(lib->docs, sizeof(Document), lib->count, dst);
+    fseek(open_gbv, sb.dir_offset, SEEK_SET);
+    fwrite(lib->docs, sizeof(Document), lib->count, open_gbv);
 
     fclose(src);
-    fclose(dst);
     return 0;
 }
 
@@ -147,8 +140,8 @@ int gbv_list(const Library *lib) {
     return 0;
 }
 
-int gbv_remove(Library *lib, const char *archive, const char *docname) {
-    if (!lib || !archive || !docname)
+int gbv_remove(Library *lib, const char *docname) {
+    if (!lib || !docname)
         return -1;
 
     int remove = -1;
@@ -176,29 +169,22 @@ int gbv_remove(Library *lib, const char *archive, const char *docname) {
     else
         perror("Erro ao tentar diminuir diretorio");
 
-    FILE *fp = fopen(archive,"rb+");
-    if (!fp){
-        perror("Erro ao abrir container");
-        return -1;
-    }
-
     // Reescreve o superbloco
     SuperBlock sb;
-    fseek(fp, 0, SEEK_SET);
-    fread(&sb, sizeof(SuperBlock), 1, fp);
+    fseek(open_gbv, 0, SEEK_SET);
+    fread(&sb, sizeof(SuperBlock), 1, open_gbv);
     sb.count = lib->count;
 
-    fseek(fp, 0, SEEK_SET);
-    fwrite(&sb, sizeof(SuperBlock), 1, fp);
+    fseek(open_gbv, 0, SEEK_SET);
+    fwrite(&sb, sizeof(SuperBlock), 1, open_gbv);
 
-    fseek(fp, sb.dir_offset, SEEK_SET);
-    fwrite(lib->docs, sizeof(Document), lib->count, fp);
+    fseek(open_gbv, sb.dir_offset, SEEK_SET);
+    fwrite(lib->docs, sizeof(Document), lib->count, open_gbv);
 
-    fclose(fp);
     return 0;
 }
 
-int gbv_view(const Library *lib, const char *archive, const char *docname) {
+int gbv_view(const Library *lib, const char *docname) {
     Document *doc = NULL;
     for (int i = 0; i < lib->count; i++){
         if (strcmp(lib->docs[i].name, docname) == 0){
@@ -208,13 +194,6 @@ int gbv_view(const Library *lib, const char *archive, const char *docname) {
     }
     if (!doc){
         printf("Documento %s nao encontrado.\n",docname);
-        return -1;
-    }
-
-
-    FILE *fp = fopen(archive,"rb");
-    if (!fp){
-        perror("Erro ao abirir container");
         return -1;
     }
 
@@ -228,8 +207,8 @@ int gbv_view(const Library *lib, const char *archive, const char *docname) {
         size_t to_read = (remaining < BUFFER_SIZE) ? remaining : BUFFER_SIZE;
 
         // andar para o bloco correto dentro do container
-        fseek(fp, doc->offset + pos, SEEK_SET);
-        size_t n = fread(buffer, 1, to_read, fp);
+        fseek(open_gbv, doc->offset + pos, SEEK_SET);
+        size_t n = fread(buffer, 1, to_read, open_gbv);
 
         fwrite(buffer, 1, n, stdout);
         printf("\n");
@@ -262,7 +241,6 @@ int gbv_view(const Library *lib, const char *archive, const char *docname) {
 
     } while (opcao != 'q');
 
-    fclose(fp);
     return 0;
 }
 
@@ -270,4 +248,10 @@ int gbv_view(const Library *lib, const char *archive, const char *docname) {
 int gbv_order(Library *lib, const char *archive, const char *criteria) {
     printf("Função gbv_order ainda não implementada.\n");
     return 0;
+}
+
+void gbv_close(){
+    if (open_gbv){
+        fclose(open_gbv);
+    }
 }
