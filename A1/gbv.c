@@ -71,6 +71,14 @@ int gbv_add(Library *lib, const char *archive, const char *docname){
         return -1;
     }
 
+    // Se existir um doc de mesmo nome remove para adicionar o novo
+    for (int i = 0; i < lib->count; i++){
+        if (strcmp(docname, lib->docs[i].name) == 0){
+            gbv_remove(lib, docname);
+            break;
+        }
+    }
+
     SuperBlock sb;
     fseek(open_gbv, 0, SEEK_SET);
     fread(&sb, sizeof(SuperBlock), 1, open_gbv);
@@ -135,7 +143,7 @@ int gbv_list(const Library *lib) {
         printf("Tamanho: %ld bytes\n", d.size);
         printf("Data: %s\n", date);
         printf("Offset: %ld\n", d.offset);
-        printf("---------------------------\n");
+        printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
     }
 
     return 0;
