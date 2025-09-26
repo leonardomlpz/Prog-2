@@ -222,7 +222,9 @@ int gbv_view(const Library *lib, const char *docname) {
         fwrite(buffer, 1, n, stdout);
         printf("\n");
 
-        printf("Opcoes: n -> prox bloco;\n        p -> bloco anterior;\n        q -> sair\n");
+        fflush(stdout);
+
+        printf("\n\nOpcoes:\n n -> prox bloco;\n p -> bloco anterior;\n q -> sair\n");
         scanf("%c", &opcao);
         getchar();
 
@@ -231,14 +233,14 @@ int gbv_view(const Library *lib, const char *docname) {
             if (pos + BUFFER_SIZE < doc->size)
                 pos += BUFFER_SIZE;
             else
-                printf("Fim do documento.\n");
+                printf("\n~~~~Fim do documento.~~~~\n\n");
             break;
 
             case 'p':
                 if (pos - BUFFER_SIZE >= 0)
                     pos -= BUFFER_SIZE;
                 else
-                    printf("Esta no inicio.\n");
+                    printf("\n~~~~Esta no inicio.~~~~\n\n");
             break;
     
             case 'q':
