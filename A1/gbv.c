@@ -5,6 +5,7 @@
 #include "util.h"
 
 static FILE *open_gbv = NULL;
+static char *nome_orignial;
 
 typedef struct {
     int count;
@@ -32,6 +33,7 @@ int gbv_create(const char *filename){
 }
 
 int gbv_open(Library *lib, const char *filename){
+    nome_orignial = strdup(filename);
     open_gbv = fopen(filename, "rb+");
     if (!open_gbv){
         perror("Erro ao abrir o arquivo");
@@ -62,6 +64,14 @@ int gbv_open(Library *lib, const char *filename){
     }
 
     return 0;
+}
+
+void gbv_close(){
+    if (open_gbv)
+        fclose(open_gbv);
+
+    if (nome_orignial)
+        free(nome_orignial);
 }
 
 int gbv_add(Library *lib, const char *archive, const char *docname){
@@ -153,42 +163,82 @@ int gbv_remove(Library *lib, const char *docname) {
     if (!lib || !docname)
         return -1;
 
-    int remove = -1;
+    int remover = -1;
     for (int i = 0; i < lib->count; i++){
         if (strcmp(lib->docs[i].name, docname) == 0){
-            remove = i;
+            remover = i;
             break;
         }
     }
-    if (remove == -1){
+    if (remover == -1){
         printf("Documento %s nao encontrado.\n", docname);
         return -1;
     }
-
-    for (int i = remove; i < (lib->count - 1); i++){
+    
+    for (int i = remover; i < lib->count - 1; i++)
         lib->docs[i] = lib->docs[i+1];
-    }
+
     lib->count--;
 
     size_t new_size_docs = lib->count * sizeof(Document);
     Document *temp = realloc(lib->docs, new_size_docs);
-
     if (temp != NULL || lib->count == 0)
         lib->docs = temp;
     else
-        perror("Erro ao tentar diminuir diretorio");
+        perror("Erro ao diminuir diretorio");
 
-    // Reescreve o superbloco
-    SuperBlock sb;
-    fseek(open_gbv, 0, SEEK_SET);
-    fread(&sb, sizeof(SuperBlock), 1, open_gbv);
-    sb.count = lib->count;
 
-    fseek(open_gbv, 0, SEEK_SET);
-    fwrite(&sb, sizeof(SuperBlock), 1, open_gbv);
 
-    fseek(open_gbv, sb.dir_offset, SEEK_SET);
-    fwrite(lib->docs, sizeof(Document), lib->count, open_gbv);
+    FILE *temp_gbv = fopen("biblioteca.tmp", "wb");
+    if (!temp_gbv){
+        perror("Erro ao criar arquivo temporario");
+        return -1;
+    }
+
+    SuperBlock sb_novo;
+    sb_novo.count = lib->count;
+    long pos_escrita_atual = sizeof(SuperBlock);
+    static char buffer[BUFFER_SIZE];
+
+    fseek(temp_gbv, pos_escrita_atual, SEEK_SET);
+
+        // Loop para copiar os dados válidos
+    for (int i = 0; i < lib->count; i++) {
+        long offset_antigo = lib->docs[i].offset;
+        long bytes_para_copiar = lib->docs[i].size;
+        
+        // ATUALIZA o offset na memória com a posição correta no novo arquivo
+        lib->docs[i].offset = pos_escrita_atual;
+
+        // Posiciona a leitura no arquivo ANTIGO (global)
+        fseek(open_gbv, offset_antigo, SEEK_SET);
+
+        // Copia os dados do arquivo antigo para o novo
+        while (bytes_para_copiar > 0) {
+            size_t to_read = (bytes_para_copiar < BUFFER_SIZE) ? bytes_para_copiar : BUFFER_SIZE;
+            size_t n = fread(buffer, 1, to_read, open_gbv);
+            fwrite(buffer, 1, n, temp_gbv);
+            pos_escrita_atual += n;
+            bytes_para_copiar -= n;
+        }
+    }
+
+    // Agora que sabemos o tamanho final, atualizamos e escrevemos o superbloco
+    sb_novo.dir_offset = pos_escrita_atual;
+    fseek(temp_gbv, 0, SEEK_SET);
+    fwrite(&sb_novo, sizeof(SuperBlock), 1, temp_gbv);
+
+    // E escrevemos o diretório atualizado no final
+    fseek(temp_gbv, sb_novo.dir_offset, SEEK_SET);
+    fwrite(lib->docs, sizeof(Document), lib->count, temp_gbv);
+
+    fclose(temp_gbv);
+    fclose(open_gbv);
+
+    remove(nome_orignial);
+    rename("biblioteca.tmp", nome_orignial);
+
+    open_gbv = fopen(nome_orignial, "rb+");
 
     return 0;
 }
@@ -225,8 +275,7 @@ int gbv_view(const Library *lib, const char *docname) {
         fflush(stdout);
 
         printf("\n\nOpcoes:\n n -> prox bloco;\n p -> bloco anterior;\n q -> sair\n");
-        scanf("%c", &opcao);
-        getchar();
+        scanf(" %c", &opcao);
 
         switch (opcao){
             case 'n':
@@ -259,10 +308,4 @@ int gbv_view(const Library *lib, const char *docname) {
 int gbv_order(Library *lib, const char *archive, const char *criteria) {
     printf("Função gbv_order ainda não implementada.\n");
     return 0;
-}
-
-void gbv_close(){
-    if (open_gbv){
-        fclose(open_gbv);
-    }
 }
