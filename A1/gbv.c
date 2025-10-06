@@ -202,12 +202,12 @@ int gbv_remove(Library *lib, const char *docname) {
 
     fseek(temp_gbv, pos_escrita_atual, SEEK_SET);
 
-        // Loop para copiar os dados válidos
+    // Loop para copiar os dados válidos
     for (int i = 0; i < lib->count; i++) {
         long offset_antigo = lib->docs[i].offset;
         long bytes_para_copiar = lib->docs[i].size;
         
-        // ATUALIZA o offset na memória com a posição correta no novo arquivo
+        // Atualiza o offset na memória com a posição correta no novo arquivo
         lib->docs[i].offset = pos_escrita_atual;
 
         // Posiciona a leitura no arquivo ANTIGO (global)
