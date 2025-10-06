@@ -164,6 +164,7 @@ int gbv_remove(Library *lib, const char *docname) {
         return -1;
 
     int remover = -1;
+    // Procura se existe o doc
     for (int i = 0; i < lib->count; i++){
         if (strcmp(lib->docs[i].name, docname) == 0){
             remover = i;
@@ -175,11 +176,12 @@ int gbv_remove(Library *lib, const char *docname) {
         return -1;
     }
     
+    // Remove do vetor de doc
     for (int i = remover; i < lib->count - 1; i++)
         lib->docs[i] = lib->docs[i+1];
 
     lib->count--;
-
+    // Realoca o espaco do vetor
     size_t new_size_docs = lib->count * sizeof(Document);
     Document *temp = realloc(lib->docs, new_size_docs);
     if (temp != NULL || lib->count == 0)
@@ -188,7 +190,7 @@ int gbv_remove(Library *lib, const char *docname) {
         perror("Erro ao diminuir diretorio");
 
 
-
+    // Cria uma biblioteca temporaria 
     FILE *temp_gbv = fopen("biblioteca.tmp", "wb");
     if (!temp_gbv){
         perror("Erro ao criar arquivo temporario");
@@ -202,15 +204,15 @@ int gbv_remove(Library *lib, const char *docname) {
 
     fseek(temp_gbv, pos_escrita_atual, SEEK_SET);
 
-    // Loop para copiar os dados válidos
+    // Loop para copiar os dados validos
     for (int i = 0; i < lib->count; i++) {
         long offset_antigo = lib->docs[i].offset;
         long bytes_para_copiar = lib->docs[i].size;
         
-        // Atualiza o offset na memória com a posição correta no novo arquivo
+        // Atualiza o offset na memoria com a posição correta no novo arquivo
         lib->docs[i].offset = pos_escrita_atual;
 
-        // Posiciona a leitura no arquivo ANTIGO (global)
+        // Posiciona a leitura no arquivo antigo (global)
         fseek(open_gbv, offset_antigo, SEEK_SET);
 
         // Copia os dados do arquivo antigo para o novo
@@ -228,14 +230,15 @@ int gbv_remove(Library *lib, const char *docname) {
     fseek(temp_gbv, 0, SEEK_SET);
     fwrite(&sb_novo, sizeof(SuperBlock), 1, temp_gbv);
 
-    // E escrevemos o diretório atualizado no final
+    // Escrevendo o diretorio atualizado no final
     fseek(temp_gbv, sb_novo.dir_offset, SEEK_SET);
     fwrite(lib->docs, sizeof(Document), lib->count, temp_gbv);
 
     fclose(temp_gbv);
     fclose(open_gbv);
-
+    // Apaga o gbv original
     remove(nome_orignial);
+    // Renomeia o novo
     rename("biblioteca.tmp", nome_orignial);
 
     open_gbv = fopen(nome_orignial, "rb+");
@@ -257,15 +260,16 @@ int gbv_view(const Library *lib, const char *docname) {
     }
 
     static char buffer[BUFFER_SIZE];
-    long pos = 0; // posicao atual no doc
+    // Posicao atual no doc
+    long pos = 0; 
 
     char opcao;
     do{
-        // calcular quanto ainda falta do documento
+        // Calcular quanto ainda falta do documento
         long remaining = doc->size - pos;
         size_t to_read = (remaining < BUFFER_SIZE) ? remaining : BUFFER_SIZE;
 
-        // andar para o bloco correto dentro do container
+        // Andar para o bloco correto dentro do container
         fseek(open_gbv, doc->offset + pos, SEEK_SET);
         size_t n = fread(buffer, 1, to_read, open_gbv);
 
