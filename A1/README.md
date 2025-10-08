@@ -2,8 +2,8 @@
 
 ### 1. Autoria
 
-* **Nome:** `[Leonardo Martins Lopes]`
-* **GRR:** `[20242343]`
+* **Nome:** Leonardo Martins Lopes
+* **GRR:** 20242343
 
 ---
 
