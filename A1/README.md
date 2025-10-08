@@ -24,10 +24,11 @@
 #### Dificuldades Enfrentadas:
 
 * A mudança do requisito de remoção lógica para remoção física com compactação, que aumentou significativamente a complexidade da função `gbv_remove`.
+* Desenvolver a lógica de leitura na função gbv_view para exibir corretamente o último bloco de um documento, especialmente quando o tamanho dos dados remanescentes era inferior ao `BUFFER_SIZE`.
 * Entender o gerenciamento do ponteiro de arquivo (`FILE*`) como um estado global.
 * Corrigir o bug de "double free" causado pela chamada incorreta da função `gbv_close` dentro de `gbv_remove`.
 * Compreender o funcionamento do buffer de saída (`stdout`) e a necessidade de `fflush(stdout)` para corrigir a exibição na função `gbv_view`.
 
 #### Bugs conhecidos:
 
-* Sem bugs conhecidos.
+* Se o programa for interrompido abruptamente durante a execução da remoção, um arquivo `biblioteca.tmp` pode permanecer no diretório.
