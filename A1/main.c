@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include "gbv.h"
 
 void gbv_close();
@@ -68,6 +69,7 @@ int main(int argc, char *argv[]) {
         printf("Formato de opção inválido: '%s'. Use opções como '-a', '-l', etc.\n", opcao);
     }
 
+    free(lib.docs);
     gbv_close();
     return 0;
 }

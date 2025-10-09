@@ -19,7 +19,7 @@ int gbv_create(const char *filename){
         return -1;
     }
 
-    SuperBlock sb;
+    SuperBlock sb = {0};
     sb.count = 0;
     sb.dir_offset = sizeof(SuperBlock);
 
@@ -197,7 +197,7 @@ int gbv_remove(Library *lib, const char *docname) {
         return -1;
     }
 
-    SuperBlock sb_novo;
+    SuperBlock sb_novo = {0};
     sb_novo.count = lib->count;
     long pos_escrita_atual = sizeof(SuperBlock);
     static char buffer[BUFFER_SIZE];
@@ -242,6 +242,10 @@ int gbv_remove(Library *lib, const char *docname) {
     rename("biblioteca.tmp", nome_orignial);
 
     open_gbv = fopen(nome_orignial, "rb+");
+    if (!open_gbv){
+        perror("Erro ao reabrir a biblioteca apos a remocao");
+        return -1;
+    }
 
     return 0;
 }
