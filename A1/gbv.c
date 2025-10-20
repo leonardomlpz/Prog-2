@@ -116,7 +116,13 @@ int gbv_add(Library *lib, const char *archive, const char *docname){
         fwrite(buffer1, 1, n, open_gbv);
 
     // Atualizar a biblioteca na memoria
-    lib->docs = realloc(lib->docs, (lib->count + 1) * sizeof(Document));
+    Document *temp = realloc(lib->docs, (lib->count + 1) * sizeof(Document));
+    if (temp == NULL){
+        perror("Erro ao realocar memoria para adicionar documento");
+        fclose(src);
+        return -1;
+    }
+    lib->docs = temp;
     lib->docs[lib->count] = doc;
     lib->count++;
 
@@ -312,8 +318,98 @@ int gbv_view(const Library *lib, const char *docname) {
     return 0;
 }
 
-//  IGNORAR ESSA FUNCAO
+int comp_name(const void *a, const void *b){
+    Document *docA = (Document *)a;
+    Document *docB = (Document *)b;
+
+    return strcmp(docA->name, docB->name);
+}
+
+int comp_size(const void *a, const void *b){
+    Document *docA = (Document *)a;
+    Document *docB = (Document *)b;
+
+    if (docA->size < docB->size)
+        return -1;
+    if (docA->size > docB->size)
+        return 1;
+    return 0;
+}
+
+int comp_date(const void *a, const void *b){
+    Document *docA = (Document *)a;
+    Document *docB = (Document *)b;
+
+    double diff = difftime(docA->date, docB->date);
+
+    if (diff < 0)
+        return -1;
+    if (diff > 0)
+        return 1;
+    return 0;
+}
+
 int gbv_order(Library *lib, const char *archive, const char *criteria) {
-    printf("Função gbv_order ainda não implementada.\n");
+    //Ordenar em memória
+    if (strcmp(criteria, "nome") == 0)
+        qsort(lib->docs, lib->count, sizeof(Document), comp_name);
+    else if (strcmp(criteria, "data") == 0)
+        qsort(lib->docs, lib->count, sizeof(Document), comp_date);
+    else if (strcmp(criteria, "tamanho") == 0)
+        qsort(lib->docs, lib->count, sizeof(Document), comp_size);
+    else{
+        fprintf(stderr, "Critério de ordenação '%s' inválido.\n", criteria);
+        return -1;
+    }
+
+    FILE *temp_gbv = fopen("biblioteca.tmb", "wb");
+    if (!temp_gbv){
+        perror("Erro ao criar arquivo temporário");
+        return -1;
+    }
+
+    SuperBlock sb_novo = {0};
+    sb_novo.count = lib->count;
+    long pos_escrita_atual = sizeof(SuperBlock);
+    static char buffer[BUFFER_SIZE];
+
+    fseek(temp_gbv, pos_escrita_atual, SEEK_SET);
+
+    for (int i = 0; i < lib->count; i++){
+        long offset_antigo = lib->docs[i].offset;
+        long bytes_para_copiar = lib->docs[i].size;
+
+        lib->docs[i].offset = pos_escrita_atual;
+
+        fseek(open_gbv, offset_antigo, SEEK_SET);
+
+        while (bytes_para_copiar > 0){
+            size_t to_read = (bytes_para_copiar < BUFFER_SIZE) ? bytes_para_copiar : BUFFER_SIZE;
+            size_t n = fread(buffer, 1, to_read, open_gbv);
+            fwrite(buffer, 1, n, temp_gbv);
+            pos_escrita_atual += n;
+            bytes_para_copiar -= n;
+        }
+    }
+
+    sb_novo.dir_offset = pos_escrita_atual;
+    fseek(temp_gbv, 0, SEEK_SET);
+    fwrite(&sb_novo, sizeof(SuperBlock), 1, temp_gbv);
+
+    fseek(temp_gbv, sb_novo.dir_offset, SEEK_SET);
+    fwrite(lib->docs, sizeof(Document), lib->count, temp_gbv);
+
+    fclose(temp_gbv);
+    fclose(open_gbv);
+
+    remove(nome_orignial);
+    rename("biblioteca.tmb", nome_orignial);
+
+    open_gbv = fopen(nome_orignial, "rb+");
+    if (!open_gbv){
+        perror("Erro ao reabrir a biblioteca apos a remocao");
+        return -1;
+    }
+
     return 0;
 }
