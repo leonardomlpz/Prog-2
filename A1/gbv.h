@@ -28,7 +28,7 @@ int gbv_remove(Library *lib, const char *docname);
 int gbv_list(const Library *lib);
 int gbv_view(const Library *lib, const char *docname);
 int gbv_order(Library *lib, const char *archive, const char *criteria);
-int gbv_deriva(Library *lib, const char *archive, const char *docname, Library *new_lib);
+int gbv_deriva(Library *lib, const char *archive, Library *new_lib);
 
 #endif
 

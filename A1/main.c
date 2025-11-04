@@ -93,9 +93,8 @@ int main(int argc, char *argv[]) {
                     } 
                 }
 
-                for (int i = 3; i < argc; i++){
-                    gbv_deriva(&lib, biblioteca, argv[i], new_lib);
-                }
+                gbv_deriva(&lib, biblioteca, new_lib);
+
                 free(new_lib->docs);
                 free(new_lib);
                 break;

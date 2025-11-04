@@ -414,7 +414,7 @@ int gbv_order(Library *lib, const char *archive, const char *criteria) {
     return 0;
 }
 
-int gbv_deriva(Library *lib, const char *archive, const char *docname, Library *new_lib){
+int gbv_deriva(Library *lib, const char *archive, Library *new_lib){
     FILE *temp_gbv = fopen("nova.tmp", "wb+");
     if (!temp_gbv){
         perror("Erro ao criar aquivo temporario");
@@ -429,8 +429,8 @@ int gbv_deriva(Library *lib, const char *archive, const char *docname, Library *
     fseek(temp_gbv, pos_escr_atual, SEEK_SET);
 
     for (int i = 0; i < new_lib->count; i++){
-        long offset_antigo = lib->docs[i].offset;
-        long bytes_para_copiar = lib->docs[i].size;
+        long offset_antigo = new_lib->docs[i].offset;
+        long bytes_para_copiar = new_lib->docs[i].size;
 
         new_lib->docs[i].offset = pos_escr_atual;
 
@@ -453,11 +453,13 @@ int gbv_deriva(Library *lib, const char *archive, const char *docname, Library *
     fwrite(new_lib->docs, sizeof(Document), new_lib->count, temp_gbv);
 
     fclose(temp_gbv);
-    char *novo_nome = strdup(nome_orignial);
-    size_t n = sizeof(nome_orignial);
-    novo_nome = realloc(novo_nome, sizeof(nome_orignial) + 2);
-    novo_nome[n+1] = '_';
-    novo_nome[n+2] = 'z';
+
+    size_t n = strlen(nome_orignial);
+    char *novo_nome = malloc(n + 3);
+    strcpy(novo_nome, nome_orignial);
+    novo_nome[n] = '_';
+    novo_nome[n+1] = 'z';
+    novo_nome[n+2] = '\0';
 
     rename("nova.tmp", novo_nome);
 
