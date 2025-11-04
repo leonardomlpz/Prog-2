@@ -84,10 +84,7 @@ int main(int argc, char *argv[]) {
                 for (int i = 3; i < argc; i++){
                     for (int j = 0; j < lib.count; j++){
                         if (strcmp(argv[i], lib.docs[j].name) == 0){
-                            new_lib->docs[k].size = lib.docs[j].size;
-                            new_lib->docs[k].date = lib.docs[j].date;
-                            new_lib->docs[k].offset = lib.docs[j].offset;
-                            strcpy(new_lib->docs[k].name, lib.docs[j].name);
+                            new_lib->docs[k] = lib.docs[j];
                             k++;
                         }
                     } 
