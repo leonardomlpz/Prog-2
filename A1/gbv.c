@@ -413,3 +413,55 @@ int gbv_order(Library *lib, const char *archive, const char *criteria) {
 
     return 0;
 }
+
+int gbv_deriva(Library *lib, const char *archive, const char *docname, Library *new_lib){
+    FILE *temp_gbv = fopen("nova.tmp", "wb+");
+    if (!temp_gbv){
+        perror("Erro ao criar aquivo temporario");
+        return -1;
+    }
+
+    SuperBlock sb_novo = {0};
+    sb_novo.count = new_lib->count;
+    long pos_escr_atual = sizeof(SuperBlock);
+    static char buffer[BUFFER_SIZE];
+
+    fseek(temp_gbv, pos_escr_atual, SEEK_SET);
+
+    for (int i = 0; i < new_lib->count; i++){
+        long offset_antigo = lib->docs[i].offset;
+        long bytes_para_copiar = lib->docs[i].size;
+
+        new_lib->docs[i].offset = pos_escr_atual;
+
+        fseek(open_gbv, offset_antigo, SEEK_SET);
+
+        while(bytes_para_copiar > 0){
+            size_t to_read = (bytes_para_copiar < BUFFER_SIZE) ? bytes_para_copiar : BUFFER_SIZE;
+            size_t n = fread(buffer, 1, to_read, open_gbv);
+            fwrite(buffer, 1, n, temp_gbv);
+            pos_escr_atual += n;
+            bytes_para_copiar -= n;
+        }
+    }
+
+    sb_novo.dir_offset = pos_escr_atual;
+    fseek(temp_gbv, 0, SEEK_SET);
+    fwrite(&sb_novo, sizeof(SuperBlock), 1, temp_gbv);
+
+    fseek(temp_gbv, sb_novo.dir_offset, SEEK_SET);
+    fwrite(new_lib->docs, sizeof(Document), new_lib->count, temp_gbv);
+
+    fclose(temp_gbv);
+    char *novo_nome = strdup(nome_orignial);
+    size_t n = sizeof(nome_orignial);
+    novo_nome = realloc(novo_nome, sizeof(nome_orignial) + 2);
+    novo_nome[n+1] = '_';
+    novo_nome[n+2] = 'z';
+
+    rename("nova.tmp", novo_nome);
+
+    free(novo_nome);
+
+    return 0;
+}

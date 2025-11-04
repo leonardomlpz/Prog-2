@@ -61,6 +61,46 @@ int main(int argc, char *argv[]) {
                 }
                 break;
 
+            case 'z':
+                Library *new_lib = malloc(sizeof(Library));
+                new_lib->count = 0;
+                //new_lib->docs = NULL;
+                for (int i = 3; i < argc; i++){
+                    int existe = 0;
+                    for (int j = 0; j < lib.count; j++){
+                        if (strcmp(argv[i], lib.docs[j].name) == 0){
+                            existe = 1;
+                            new_lib->count++;
+                        }
+                    }
+                    if (!existe){
+                        printf ("Um dos docs nao existem\n");
+                        free(new_lib);
+                        return 0;
+                    }
+                }
+                new_lib->docs = malloc(new_lib->count*sizeof(Document));
+                int k = 0;
+                for (int i = 3; i < argc; i++){
+                    for (int j = 0; j < lib.count; j++){
+                        if (strcmp(argv[i], lib.docs[j].name) == 0){
+                            new_lib->docs[k].size = lib.docs[j].size;
+                            new_lib->docs[k].date = lib.docs[j].date;
+                            new_lib->docs[k].offset = lib.docs[j].offset;
+                            strcpy(new_lib->docs[k].name, lib.docs[j].name);
+                            k++;
+                        }
+                    } 
+                }
+
+                for (int i = 3; i < argc; i++){
+                    gbv_deriva(&lib, biblioteca, argv[i], new_lib);
+                }
+                free(new_lib->docs);
+                free(new_lib);
+                break;
+
+
             default:
                 printf("Opção '-%c' é inválida.\n", opcao[1]);
                 break;
