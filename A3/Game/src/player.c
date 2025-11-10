@@ -23,7 +23,7 @@ Player* player_create(float start_x, float start_y) {
     p->height = 32;
     p->vel_x = 0;
     p->vel_y = 0;
-    p->hp = 5;      // [cite: 34] (requisito: sistema de pontos de vida)
+    p->hp = 5;
     p->state = IDLE;
     p->on_ground = false;
 
