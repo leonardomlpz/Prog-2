@@ -3,6 +3,7 @@
 
 #include <allegro5/allegro5.h>
 #include <allegro5/allegro_image.h>
+#include "world.h"
 
 typedef enum {
     IDLE,
@@ -23,6 +24,7 @@ typedef struct {
 
     bool move_left;
     bool move_right;
+    bool jump_pressed;
 } Player;
 
 Player *player_create(float start_x, float start_y);
@@ -31,7 +33,7 @@ void player_destroy(Player *p);
 
 void player_handle_event(Player *p, ALLEGRO_EVENT *event);
 
-void player_update(Player*p);
+void player_update(Player *p, World *world);
 
 void player_draw(Player *p);
 

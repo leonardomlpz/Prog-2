@@ -8,6 +8,7 @@
 #include "game.h"
 #include "player.h"
 #include "menu.h"
+#include "world.h"
 
 // Funcao de verificacao de erro
 void must_init(bool test, const char *description)
@@ -51,6 +52,7 @@ int main()
     GameState state = STATE_MENU; // O jogo comeca no menu
     Player *player = player_create(100, 100);
     Menu *menu = menu_create();
+    World *world = world_create();
 
     // Nossos objetos de jogo serao criados aqui (ex: Player* player = player_create();)
     
@@ -84,7 +86,7 @@ int main()
                 player_handle_event(player, &event);
 
                 if(event.type == ALLEGRO_EVENT_TIMER) {
-                    player_update(player);
+                    player_update(player, world);
                     redraw = true;
                 }
                 break;
@@ -111,6 +113,7 @@ int main()
                     break;
                 
                 case STATE_GAMEPLAY:
+                    world_draw(world);
                     player_draw(player);
                     break;
 
@@ -130,6 +133,7 @@ int main()
     menu_destroy(menu);
     al_destroy_display(disp);
     al_destroy_timer(timer);
+    world_destroy(world);
     al_destroy_event_queue(queue);
 
     return 0;
