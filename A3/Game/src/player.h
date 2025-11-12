@@ -13,7 +13,7 @@ typedef enum {
     INTERACTING
 } PlayerState;
 
-typedef struct {
+typedef struct Player{
     float x, y;
     int hp;
     float width, height;
@@ -25,6 +25,14 @@ typedef struct {
     bool move_left;
     bool move_right;
     bool jump_pressed;
+
+    ALLEGRO_BITMAP *spritesheet; // folha de sprites
+
+    int anim_row;           // Qual linha da spritesheet (0=parado, 1=andando)
+    int current_frame;      // Qual coluna (frame) dessa animação
+    float frame_timer;      // Um contador para saber quando mudar de frame
+    float frame_delay;      // O tempo (em segundos) entre cada frame
+    int num_frames;         // Quantos frames tem a animação atual
 } Player;
 
 Player *player_create(float start_x, float start_y);
@@ -35,6 +43,6 @@ void player_handle_event(Player *p, ALLEGRO_EVENT *event);
 
 void player_update(Player *p, World *world);
 
-void player_draw(Player *p);
+void player_draw(Player *p, World *world);
 
 #endif

@@ -87,6 +87,7 @@ int main()
 
                 if(event.type == ALLEGRO_EVENT_TIMER) {
                     player_update(player, world);
+                    world_update(world, player);
                     redraw = true;
                 }
                 break;
@@ -114,7 +115,7 @@ int main()
                 
                 case STATE_GAMEPLAY:
                     world_draw(world);
-                    player_draw(player);
+                    player_draw(player, world);
                     break;
 
                 case STATE_GAME_OVER_WIN:

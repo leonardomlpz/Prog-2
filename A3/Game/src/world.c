@@ -1,6 +1,8 @@
-#include "world.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include "world.h"
+#include "game.h"
+#include "player.h"
 
 // Função auxiliar para pegar um tile em (x, y) no array 1D
 // (Isso torna o código em `world_create` mais legível)
@@ -22,6 +24,9 @@ World *world_create() {
     m->width = MAP_WIDTH;
     m->height = MAP_HEIGHT;
     m->tile_size = TILE_SIZE;
+
+    m->camera_x = 0;
+    m->camera_y = 0;
 
     // Aloca memória para todos os blocos do mapa
     m->tiles = (int*) calloc(m->width * m->height, sizeof(int));
@@ -83,10 +88,10 @@ void world_draw(World *m) {
                 
                 // Desenha um retângulo na posição correta
                 al_draw_filled_rectangle(
-                    x * m->tile_size,         // x1
-                    y * m->tile_size,         // y1
-                    (x + 1) * m->tile_size,   // x2
-                    (y + 1) * m->tile_size,   // y2
+                    x * m->tile_size - m->camera_x,         // x1
+                    y * m->tile_size - m->camera_y,         // y1
+                    (x + 1) * m->tile_size - m->camera_x,   // x2
+                    (y + 1) * m->tile_size - m->camera_y,   // y2
                     floor_color
                 );
             }
@@ -112,4 +117,32 @@ bool world_is_solid(World *m, int x, int y) {
     }
 
     return false; // Não é sólido (é ar)
+}
+
+// --- Atualizar Câmera ---
+void world_update(World *m, struct Player *p) {
+    
+    // A câmera tenta centralizar o jogador na tela
+    m->camera_x = p->x - (SCREEN_WIDTH / 2);
+    
+    // --- Clamping (Travar a câmera) ---
+    // Não deixa a câmera ir para a esquerda do início do mapa
+    if (m->camera_x < 0) {
+        m->camera_x = 0;
+    }
+    
+    // Não deixa a câmera ir para a direita do fim do mapa
+    float max_camera_x = (m->width * m->tile_size) - SCREEN_WIDTH;
+    if (m->camera_x > max_camera_x) {
+        m->camera_x = max_camera_x;
+    }
+
+    // (Opcional: Trava a câmera Y)
+    if (m->camera_y < 0) {
+        m->camera_y = 0;
+    }
+    float max_camera_y = (m->height * m->tile_size) - SCREEN_HEIGHT;
+    if (m->camera_y > max_camera_y) {
+        m->camera_y = max_camera_y;
+    }
 }

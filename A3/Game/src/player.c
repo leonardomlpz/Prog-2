@@ -20,7 +20,7 @@ Player* player_create(float start_x, float start_y) {
 
     p->x = start_x;
     p->y = start_y;
-    p->width = 32;  // Um quadrado de 32x32 pixels
+    p->width = 32;
     p->height = 32;
     p->vel_x = 0;
     p->vel_y = 0;
@@ -32,6 +32,18 @@ Player* player_create(float start_x, float start_y) {
     p->move_right = false;
     p->jump_pressed = false;
 
+    p->spritesheet = al_load_bitmap("assets/player_sheet.png");
+    if (!p->spritesheet) {
+        printf("Erro ao carregar spritesheet 'assets/player_sheet.png'\n");
+        free(p);
+        return NULL;
+    }
+    p->anim_row = 0;        // Começa na linha 0 (parado)
+    p->current_frame = 0;
+    p->frame_timer = 0;
+    p->frame_delay = 0.1;
+    p->num_frames = 2;
+
     printf("Jogador (quadrado) criado!\n");
     return p;
 }
@@ -39,6 +51,8 @@ Player* player_create(float start_x, float start_y) {
 // --- Destruir Jogador ---
 void player_destroy(Player* p) {
     if (p) {
+        if (p->spritesheet)
+            al_destroy_bitmap(p->spritesheet);
         free(p);
         printf("Jogador destruído.\n");
     }
@@ -88,6 +102,10 @@ void player_update(Player *p, World *world) {
         p->vel_y = -JUMP_POWER;
         p->state = JUMPING;
         p->on_ground = false;
+
+        p->anim_row = 2;
+        p->num_frames = 2;
+        p->current_frame = 0;
     }
 
     // 3. Aplicar gravidade (sempre)
@@ -137,7 +155,12 @@ void player_update(Player *p, World *world) {
             p->y = (int)(p->y + p->height) / TILE_SIZE * TILE_SIZE - p->height;
             p->vel_y = 0;
             p->on_ground = true;
-            if (p->state == JUMPING) p->state = IDLE;
+            if (p->state == JUMPING){
+                p->state = IDLE;
+                p->anim_row = 0;
+                p->num_frames = 2;
+                p->current_frame = 0;
+            }
         }
     }
     else if (p->vel_y < 0) { // Subindo (pulando)
@@ -160,20 +183,61 @@ void player_update(Player *p, World *world) {
     // 5. Define o estado (parado/andando)
     if (p->vel_x != 0 && p->state == IDLE && p->on_ground) {
         p->state = WALKING;
+        p->anim_row = 3; // Linha da animação de "andar"
+        p->num_frames = 8; // Quantos frames tem
+        p->frame_timer = 0; // Reinicia o timer da animação
     } 
     else if (p->vel_x == 0 && p->state == WALKING) {
         p->state = IDLE;
+        p->anim_row = 0; // Linha da animação "parado"
+        p->num_frames = 2; // Quantos frames tem
+        p->current_frame = 0; // Força para o primeiro frame
+    }
+
+    // 6. Lógica de Animação
+    if (p->state == WALKING || p->state == IDLE || p->state == JUMPING) {
+        // Adiciona o tempo do último frame (1.0 / FPS) ao nosso timer
+        p->frame_timer += 1.0 / FPS; 
+
+        // Se o timer passou do nosso "delay"
+        if (p->frame_timer >= p->frame_delay) {
+            p->current_frame++; // Avança para o próximo frame
+            if (p->current_frame >= p->num_frames) {
+                p->current_frame = 0; // Volta ao início
+            }
+            p->frame_timer = 0; // Reinicia o timer
+        }
     }
 }
 
 // --- Desenhar Jogador ---
-void player_draw(Player* p) {
-    // Desenha um retângulo preenchido
-    al_draw_filled_rectangle(
-        p->x, 
-        p->y, 
-        p->x + p->width, 
-        p->y + p->height, 
-        al_map_rgb(255, 0, 0) // Cor vermelha
+void player_draw(Player *p, World *world) {
+    float sw = 32; 
+    float sh = 32; 
+
+    // sx = qual frame * largura do frame
+    float sx = p->current_frame * sw; 
+    
+    // sy = qual linha * altura do frame
+    float sy = p->anim_row * sh; 
+
+    // Posição na tela
+    float dx = p->x - world->camera_x;
+    float dy = p->y - world->camera_y;
+
+    // Flags de desenho (vamos usar para inverter o sprite)
+    int flags = 0;
+    
+    // Se estivermos nos movendo para a esquerda, inverta o bitmap
+    if (p->vel_x < 0) {
+        flags = ALLEGRO_FLIP_HORIZONTAL;
+    }
+
+    al_draw_bitmap_region(
+        p->spritesheet, 
+        sx, sy,         // De onde recortar (calculado)
+        sw, sh,         // O tamanho do recorte
+        dx, dy,         // Onde desenhar (na tela)
+        flags           // Flag para inverter
     );
 }
