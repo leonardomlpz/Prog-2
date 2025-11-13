@@ -8,7 +8,7 @@
 struct Player; 
 
 // --- Constantes do Mapa ---
-#define TILE_SIZE 32
+#define TILE_SIZE 16
 #define MAP_WIDTH 50
 #define MAP_HEIGHT 19
 
@@ -20,6 +20,9 @@ typedef struct {
     int tile_size;
     float camera_x;
     float camera_y;
+
+    ALLEGRO_BITMAP *bg_image;
+    ALLEGRO_BITMAP *tile_image;
 } World;
 
 

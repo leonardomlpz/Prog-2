@@ -7,6 +7,8 @@
 
 #define FPS 60.0
 
+#define GAME_SCALE 3.0
+
 // Nossa máquina de estados do jogo
 typedef enum {
     STATE_MENU,

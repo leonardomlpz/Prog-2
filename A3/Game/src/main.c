@@ -181,6 +181,12 @@ int main()
                     break;
                 
                 case STATE_GAMEPLAY:
+                    // Inicia o Zoom
+                    ALLEGRO_TRANSFORM transform;
+                    al_identity_transform(&transform);
+                    al_scale_transform(&transform, GAME_SCALE, GAME_SCALE);
+                    al_use_transform(&transform);
+                
                     world_draw(world);
                     player_draw(player, world);
                     break;

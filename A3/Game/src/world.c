@@ -29,6 +29,17 @@ World *world_create() {
     m->camera_x = 0;
     m->camera_y = 0;
 
+    // Carrega o background
+    m->bg_image = al_load_bitmap("assets/background.png");
+    if (!m->bg_image) {
+        printf("Aviso: Nao foi possivel carregar assets/background.png\n");
+    }
+    // Carrega a textura do chão
+    m->tile_image = al_load_bitmap("assets/tile_floor2.png");
+    if (!m->tile_image) {
+        printf("Aviso: Nao foi possivel carregar assets/tile_floor.png\n");
+    }
+
     // Aloca memória para todos os blocos do mapa
     m->tiles = (int*) calloc(m->width * m->height, sizeof(int));
     if (!m->tiles) {
@@ -69,9 +80,13 @@ World *world_create() {
 // --- Destruir Mapa ---
 void world_destroy(World *m) {
     if (m) {
-        if (m->tiles) {
+        if (m->tiles)
             free(m->tiles);
-        }
+        if (m->bg_image)
+            al_destroy_bitmap(m->bg_image);
+        if (m->tile_image)
+            al_destroy_bitmap(m->tile_image);
+
         free(m);
         printf("World destruído.\n");
     }
@@ -79,22 +94,56 @@ void world_destroy(World *m) {
 
 // --- Desenhar Mapa ---
 void world_draw(World *m) {
+    // 1. Desenha o Background com Parallax
+    if (m->bg_image) {
+        // Largura da imagem
+        int bg_w = al_get_bitmap_width(m->bg_image);
+        int bg_h = al_get_bitmap_height(m->bg_image);
+        
+        // Largura da tela virtual (ajustada pelo zoom)
+        // Precisamos saber até onde desenhar
+        float screen_w = SCREEN_WIDTH / GAME_SCALE;
+        
+        // Cálculo da Posição X com Parallax
+        // Multiplicamos por 0.5 para mover na metade da velocidade da câmera
+        float parallax_speed = 0.5; 
+        
+        // O operador % garante que o valor sempre fique entre 0 e bg_w
+        // O sinal negativo faz ele mover para a esquerda quando andamos para a direita
+        float bg_x = -((int)(m->camera_x * parallax_speed) % bg_w);
+        
+        // Desenha a primeira cópia
+        al_draw_bitmap(m->bg_image, bg_x, 0, 0);
+        
+        // Desenha a segunda cópia logo depois, para cobrir o buraco quando a primeira sai da tela
+        if (bg_x + bg_w < screen_w) {
+            al_draw_bitmap(m->bg_image, bg_x + bg_w, 0, 0);
+        }
+        
+        // (Opcional: Se sua imagem for pequena verticalmente, você pode precisar repetir no Y também
+        // ou apenas garantir que sua imagem de fundo tenha altura suficiente para o jogo).
+    }
+
     ALLEGRO_COLOR floor_color = al_map_rgb(100, 100, 100); // Cinza
     
     for (int y = 0; y < m->height; y++) {
         for (int x = 0; x < m->width; x++) {
             
-            // Se o bloco no mapa for 1 (sólido)
             if (m->tiles[y * m->width + x] == 1) {
                 
-                // Desenha um retângulo na posição correta
-                al_draw_filled_rectangle(
-                    x * m->tile_size - m->camera_x,         // x1
-                    y * m->tile_size - m->camera_y,         // y1
-                    (x + 1) * m->tile_size - m->camera_x,   // x2
-                    (y + 1) * m->tile_size - m->camera_y,   // y2
-                    floor_color
-                );
+                // Posição de desenho
+                float dx = x * m->tile_size - m->camera_x;
+                float dy = y * m->tile_size - m->camera_y;
+                
+                if (m->tile_image) {
+                    // Desenha a IMAGEM do bloco (grama)
+                    al_draw_bitmap(m->tile_image, dx, dy, 0);
+                } else {
+                    // Backup: Retângulo cinza (apenas se a imagem falhar)
+                    al_draw_filled_rectangle(dx, dy, 
+                                             dx + m->tile_size, dy + m->tile_size, 
+                                             floor_color);
+                }
             }
         }
     }
@@ -123,31 +172,27 @@ bool world_is_solid(World *m, int x, int y) {
 // --- Atualizar Câmera ---
 void world_update(World *m, struct Player *p) {
     
-    // Centraliza o X (sem zoom)
-    m->camera_x = p->x - (SCREEN_WIDTH / 2);
+    // Tela virtual (800 / 3 = aprox 266 pixels de visão)
+    float screen_w = SCREEN_WIDTH / GAME_SCALE;
+    float screen_h = SCREEN_HEIGHT / GAME_SCALE;
 
-    // Trava a câmera na esquerda (X < 0)
-    if (m->camera_x < 0)
-        m->camera_x = 0;
+    // Centraliza X
+    m->camera_x = p->x - (screen_w / 2);
 
-    // Trava a câmera na direita (Fim do mapa)
-    float max_camera_x = (m->width * m->tile_size) - SCREEN_WIDTH;
-    if (m->camera_x > max_camera_x) 
-        m->camera_x = max_camera_x;
+    // Travas X
+    if (m->camera_x < 0) m->camera_x = 0;
+    float max_x = (m->width * m->tile_size) - screen_w;
+    if (m->camera_x > max_x) m->camera_x = max_x;
 
-    // Centraliza o Y (sem zoom)
-    m->camera_y = p->y - (SCREEN_HEIGHT / 2);
+    // Centraliza Y
+    m->camera_y = p->y - (screen_h / 2);
 
-    // Trava a câmera no topo (Y < 0)
-    if (m->camera_y < 0)
-        m->camera_y = 0;
-        
-    // Trava a câmera no chão
-    float max_camera_y = (m->height * m->tile_size) - SCREEN_HEIGHT;
-    if (m->camera_y > max_camera_y)
-        m->camera_y = max_camera_y;
-    
-    // Mantemos o floor() pois ele ajuda a evitar tremedeira mesmo sem zoom
+    // Travas Y
+    if (m->camera_y < 0) m->camera_y = 0;
+    float max_y = (m->height * m->tile_size) - screen_h;
+    if (m->camera_y > max_y) m->camera_y = max_y;
+
+    // Arredonda
     m->camera_x = floor(m->camera_x);
     m->camera_y = floor(m->camera_y);
 }

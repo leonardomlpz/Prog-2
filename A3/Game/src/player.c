@@ -20,10 +20,10 @@ Player* player_create(float start_x, float start_y) {
 
     p->x = start_x;
     p->y = start_y;
-    p->width = 28;
-    p->height = 55;
+    p->width = 18;
+    p->height = 24;
     p->vel_x = 0;
-    p->vel_y = -JUMP_POWER * 2;
+    p->vel_y = 0;
     p->hp = 5;
     p->state = IDLE;
     p->on_ground = false;
@@ -32,17 +32,17 @@ Player* player_create(float start_x, float start_y) {
     p->move_right = false;
     p->jump_pressed = false;
 
-    p->spritesheet = al_load_bitmap("assets/player_sheet_2x.png");
+    p->spritesheet = al_load_bitmap("assets/ninja_sheet.png");
     if (!p->spritesheet) {
-        printf("Erro ao carregar spritesheet 'assets/player_sheet_2x.png'\n");
+        printf("Erro ao carregar spritesheet 'assets/ninja_sheet.png'\n");
         free(p);
         return NULL;
     }
     p->anim_row = 0;        // Começa na linha 0 (parado)
     p->current_frame = 0;
     p->frame_timer = 0;
-    p->frame_delay = 0.1;
-    p->num_frames = 2;
+    p->frame_delay = 0.05;
+    p->num_frames = 11;
     p->facing_direction = 1;
 
     printf("Jogador (quadrado) criado!\n");
@@ -110,7 +110,7 @@ void player_update(Player *p, World *world) {
         p->on_ground = false;
 
         p->anim_row = 2;
-        p->num_frames = 2;
+        p->num_frames = 1;
         p->current_frame = 0;
     }
 
@@ -164,8 +164,9 @@ void player_update(Player *p, World *world) {
             if (p->state == JUMPING){
                 p->state = IDLE;
                 p->anim_row = 0;
-                p->num_frames = 2;
+                p->num_frames = 11;
                 p->current_frame = 0;
+                p->frame_delay = 0.1;
             }
         }
     }
@@ -189,15 +190,17 @@ void player_update(Player *p, World *world) {
     // 5. Define o estado (parado/andando)
     if (p->vel_x != 0 && p->state == IDLE && p->on_ground) {
         p->state = WALKING;
-        p->anim_row = 3; // Linha da animação de "andar"
-        p->num_frames = 8; // Quantos frames tem
-        p->frame_timer = 0; // Reinicia o timer da animação
+        p->anim_row = 1;
+        p->num_frames = 12;
+        p->frame_timer = 0; 
+        p->frame_delay = 0.05;
     } 
     else if (p->vel_x == 0 && p->state == WALKING) {
         p->state = IDLE;
-        p->anim_row = 0; // Linha da animação "parado"
-        p->num_frames = 2; // Quantos frames tem
-        p->current_frame = 0; // Força para o primeiro frame
+        p->anim_row = 0;
+        p->num_frames = 11;
+        p->current_frame = 0;
+        p->frame_delay = 0.1;
     }
 
     // 6. Lógica de Animação
@@ -218,8 +221,8 @@ void player_update(Player *p, World *world) {
 
 // --- Desenhar Jogador ---
 void player_draw(Player *p, World *world) {
-    float sw = 64; 
-    float sh = 64; 
+    float sw = 32; 
+    float sh = 32; 
 
     // --- CÁLCULO DE OFFSET (Centralizar o desenho na hitbox) ---
     // Diferença X: (64 - 28) / 2 = 18 pixels para a esquerda
