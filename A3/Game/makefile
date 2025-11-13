@@ -8,7 +8,7 @@ ALLEGRO_CFLAGS = $(shell pkg-config --cflags allegro-5 allegro_primitives-5 alle
 ALLEGRO_LIBS = $(shell pkg-config --libs allegro-5 allegro_primitives-5 allegro_image-5 allegro_font-5 allegro_ttf-5)
 
 CFLAGS = -Wall -g $(ALLEGRO_CFLAGS)
-LDFLAGS = $(ALLEGRO_LIBS)
+LDFLAGS = $(ALLEGRO_LIBS) -lm
 
 # Nao precisa mexer daqui para baixo
 SRC = $(wildcard $(SRC_DIR)/*.c)

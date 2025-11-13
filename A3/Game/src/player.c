@@ -43,6 +43,7 @@ Player* player_create(float start_x, float start_y) {
     p->frame_timer = 0;
     p->frame_delay = 0.1;
     p->num_frames = 2;
+    p->facing_direction = 1;
 
     printf("Jogador (quadrado) criado!\n");
     return p;
@@ -96,6 +97,11 @@ void player_update(Player *p, World *world) {
     p->vel_x = 0;
     if (p->move_left)  p->vel_x -= PLAYER_SPEED;
     if (p->move_right) p->vel_x += PLAYER_SPEED;
+
+    if (p->vel_x > 0)
+        p->facing_direction = 1; // Direita
+    else if (p->vel_x < 0)
+        p->facing_direction = -1; // Esquerda
 
     // 2. Lógica de Pulo
     if (p->jump_pressed && p->on_ground) {
@@ -229,7 +235,7 @@ void player_draw(Player *p, World *world) {
     int flags = 0;
     
     // Se estivermos nos movendo para a esquerda, inverta o bitmap
-    if (p->vel_x < 0) {
+    if (p->facing_direction == -1) {
         flags = ALLEGRO_FLIP_HORIZONTAL;
     }
 

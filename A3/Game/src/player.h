@@ -28,6 +28,7 @@ typedef struct Player{
 
     ALLEGRO_BITMAP *spritesheet; // folha de sprites
 
+    int facing_direction;    // 1 == Direita, -1 = Esquerda
     int anim_row;           // Qual linha da spritesheet (0=parado, 1=andando)
     int current_frame;      // Qual coluna (frame) dessa animação
     float frame_timer;      // Um contador para saber quando mudar de frame

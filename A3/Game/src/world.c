@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include "world.h"
 #include "game.h"
 #include "player.h"
@@ -122,27 +123,31 @@ bool world_is_solid(World *m, int x, int y) {
 // --- Atualizar Câmera ---
 void world_update(World *m, struct Player *p) {
     
-    // A câmera tenta centralizar o jogador na tela
+    // Centraliza o X (sem zoom)
     m->camera_x = p->x - (SCREEN_WIDTH / 2);
-    
-    // --- Clamping (Travar a câmera) ---
-    // Não deixa a câmera ir para a esquerda do início do mapa
-    if (m->camera_x < 0) {
-        m->camera_x = 0;
-    }
-    
-    // Não deixa a câmera ir para a direita do fim do mapa
-    float max_camera_x = (m->width * m->tile_size) - SCREEN_WIDTH;
-    if (m->camera_x > max_camera_x) {
-        m->camera_x = max_camera_x;
-    }
 
-    // (Opcional: Trava a câmera Y)
-    if (m->camera_y < 0) {
+    // Trava a câmera na esquerda (X < 0)
+    if (m->camera_x < 0)
+        m->camera_x = 0;
+
+    // Trava a câmera na direita (Fim do mapa)
+    float max_camera_x = (m->width * m->tile_size) - SCREEN_WIDTH;
+    if (m->camera_x > max_camera_x) 
+        m->camera_x = max_camera_x;
+
+    // Centraliza o Y (sem zoom)
+    m->camera_y = p->y - (SCREEN_HEIGHT / 2);
+
+    // Trava a câmera no topo (Y < 0)
+    if (m->camera_y < 0)
         m->camera_y = 0;
-    }
+        
+    // Trava a câmera no chão
     float max_camera_y = (m->height * m->tile_size) - SCREEN_HEIGHT;
-    if (m->camera_y > max_camera_y) {
+    if (m->camera_y > max_camera_y)
         m->camera_y = max_camera_y;
-    }
+    
+    // Mantemos o floor() pois ele ajuda a evitar tremedeira mesmo sem zoom
+    m->camera_x = floor(m->camera_x);
+    m->camera_y = floor(m->camera_y);
 }
