@@ -7,7 +7,7 @@
 
 // Constantes da física do jogador (você pode ajustar)
 #define PLAYER_SPEED 5.0
-#define JUMP_POWER 12.0
+#define JUMP_POWER 10.0
 #define GRAVITY 0.5
 
 // --- Criar Jogador ---
@@ -20,10 +20,10 @@ Player* player_create(float start_x, float start_y) {
 
     p->x = start_x;
     p->y = start_y;
-    p->width = 32;
-    p->height = 32;
+    p->width = 28;
+    p->height = 55;
     p->vel_x = 0;
-    p->vel_y = 0;
+    p->vel_y = -JUMP_POWER * 2;
     p->hp = 5;
     p->state = IDLE;
     p->on_ground = false;
@@ -32,9 +32,9 @@ Player* player_create(float start_x, float start_y) {
     p->move_right = false;
     p->jump_pressed = false;
 
-    p->spritesheet = al_load_bitmap("assets/player_sheet.png");
+    p->spritesheet = al_load_bitmap("assets/player_sheet_2x.png");
     if (!p->spritesheet) {
-        printf("Erro ao carregar spritesheet 'assets/player_sheet.png'\n");
+        printf("Erro ao carregar spritesheet 'assets/player_sheet_2x.png'\n");
         free(p);
         return NULL;
     }
@@ -218,32 +218,41 @@ void player_update(Player *p, World *world) {
 
 // --- Desenhar Jogador ---
 void player_draw(Player *p, World *world) {
-    float sw = 32; 
-    float sh = 32; 
+    float sw = 64; 
+    float sh = 64; 
 
-    // sx = qual frame * largura do frame
+    // --- CÁLCULO DE OFFSET (Centralizar o desenho na hitbox) ---
+    // Diferença X: (64 - 28) / 2 = 18 pixels para a esquerda
+    // Diferença Y: (64 - 50) = 14 pixels para cima
+    float offset_x = (sw - p->width) / 2;
+    float offset_y = (sh - p->height);
+
+    // sx, sy (Recorte da imagem)
     float sx = p->current_frame * sw; 
-    
-    // sy = qual linha * altura do frame
     float sy = p->anim_row * sh; 
 
-    // Posição na tela
-    float dx = p->x - world->camera_x;
-    float dy = p->y - world->camera_y;
+    // dx, dy (Posição na tela com compensação)
+    float dx = (p->x - world->camera_x) - offset_x;
+    float dy = (p->y - world->camera_y) - offset_y;
 
-    // Flags de desenho (vamos usar para inverter o sprite)
     int flags = 0;
-    
-    // Se estivermos nos movendo para a esquerda, inverta o bitmap
     if (p->facing_direction == -1) {
         flags = ALLEGRO_FLIP_HORIZONTAL;
     }
 
     al_draw_bitmap_region(
         p->spritesheet, 
-        sx, sy,         // De onde recortar (calculado)
-        sw, sh,         // O tamanho do recorte
-        dx, dy,         // Onde desenhar (na tela)
-        flags           // Flag para inverter
+        sx, sy,         
+        sw, sh,         
+        dx, dy,         
+        flags           
     );
+    
+    // DICA: Se quiser ver a caixa verde real da colisão para testar, descomente abaixo:
+    al_draw_rectangle(
+        p->x - world->camera_x, p->y - world->camera_y, 
+        p->x + p->width - world->camera_x, p->y + p->height - world->camera_y, 
+        al_map_rgb(0, 255, 0), 1
+    );
+    
 }
