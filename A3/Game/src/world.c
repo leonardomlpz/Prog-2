@@ -25,7 +25,7 @@ static void world_load_csv(World *m, const char *filename) {
             int tile_gid = atoi(token);
             
             // Salva o GID real do Tiled
-            // (Tiled salva 0 para ar, e IDs > 0 para blocos)
+            // (0 para ar, IDs > 0 para blocos)
             m->tiles[y * m->width + x] = tile_gid;
 
             token = strtok(NULL, ",");
@@ -146,7 +146,7 @@ bool world_is_solid(World *m, int x, int y) {
     // Ar (0) não é sólido
     if (tile_gid == 0) return false;
 
-    if (tile_gid == 242) return false; // Espinho NÃO é sólido, você atravessa
+    if (tile_gid == 243) return false; // Espinho (243) NÃO é sólido, você atravessa
 
     // Se não for ar e não for perigo, deve ser sólido
     return true;
