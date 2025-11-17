@@ -7,7 +7,7 @@
 
 #define FPS 60.0
 
-#define GAME_SCALE 3.0
+#define GAME_SCALE 2.5
 
 // Nossa máquina de estados do jogo
 typedef enum {
