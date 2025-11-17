@@ -180,7 +180,7 @@ void player_update(Player *p, World *world) {
             p->y = (int)(p->y + p->height) / TILE_SIZE * TILE_SIZE - p->height;
             p->vel_y = 0;
             p->on_ground = true;
-            if (p->state == JUMPING){
+            if (p->state == JUMPING || p->anim_row == 3){
                 p->state = IDLE;
                 p->anim_row = 0;
                 p->num_frames = 11;
