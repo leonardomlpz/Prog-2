@@ -217,6 +217,19 @@ void player_update(Player *p, World *world) {
             p->frame_timer = 0; // Reinicia o timer
         }
     }
+
+    int tile_at_player = world_get_tile(world, p->x + p->width/2, p->y + p->height/2);
+    
+    if (tile_at_player == 242) { 
+        printf("DANO! Pisou no espinho.\n");
+        
+        // Respawn simples (volta pro inicio)
+        p->x = 100;
+        p->y = 100;
+        p->vel_x = 0;
+        p->vel_y = 0;
+        p->hp--; // Perde vida
+    }
 }
 
 // --- Desenhar Jogador ---

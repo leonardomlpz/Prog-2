@@ -22,7 +22,9 @@ typedef struct {
     float camera_y;
 
     ALLEGRO_BITMAP *bg_image;
-    ALLEGRO_BITMAP *tile_image;
+    ALLEGRO_BITMAP *tileset_sheet; // folha mestra
+
+    int tileset_cols; // largura da folha
 } World;
 
 
@@ -38,5 +40,7 @@ void world_update(World *m, struct Player *p);
 void world_draw(World* m);
 
 bool world_is_solid(World* m, int x, int y);
+
+int world_get_tile(World *m, int x, int y);
 
 #endif // WORLD_H
