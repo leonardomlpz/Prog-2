@@ -24,7 +24,7 @@ Player* player_create(float start_x, float start_y) {
     p->height = 24;
     p->vel_x = 0;
     p->vel_y = 0;
-    p->hp = 5;
+    p->hp = 3;
     p->state = IDLE;
     p->on_ground = false;
 
@@ -38,6 +38,12 @@ Player* player_create(float start_x, float start_y) {
         free(p);
         return NULL;
     }
+
+    p->heart_icon = al_load_bitmap("assets/heart.png");
+    if (!p->heart_icon) {
+        printf("Aviso: Nao foi possivel carregar assets/heart.png\n");
+    }
+
     p->anim_row = 0;        // Começa na linha 0 (parado)
     p->current_frame = 0;
     p->frame_timer = 0;
@@ -54,6 +60,10 @@ void player_destroy(Player* p) {
     if (p) {
         if (p->spritesheet)
             al_destroy_bitmap(p->spritesheet);
+            
+        if (p->heart_icon)
+            al_destroy_bitmap(p->heart_icon);
+            
         free(p);
         printf("Jogador destruído.\n");
     }
@@ -119,6 +129,15 @@ void player_update(Player *p, World *world) {
     // Limita a velocidade máxima de queda
     if (p->vel_y > 15) p->vel_y = 15;
 
+    // Se o jogador estiver no ar E caindo (vel_y > 0)
+    if (!p->on_ground && p->vel_y > 0.1) {
+        // (Assumindo que sua animação de "Fall" está na Linha 3)
+        if (p->anim_row != 3) {
+            p->anim_row = 3;
+            p->num_frames = 1; // (A animação de queda do Ninja tem 1 frame)
+            p->current_frame = 0;
+        }
+    }
 
     // --- NOVA LÓGICA DE COLISÃO ---
 
@@ -220,10 +239,24 @@ void player_update(Player *p, World *world) {
 
     int tile_at_player = world_get_tile(world, p->x + p->width/2, p->y + p->height/2);
     
-    if (tile_at_player == 242) { 
+    if (tile_at_player == 243) { 
         printf("DANO! Pisou no espinho.\n");
         
         // Respawn simples (volta pro inicio)
+        p->x = 100;
+        p->y = 100;
+        p->vel_x = 0;
+        p->vel_y = 0;
+        p->hp--; // Perde vida
+    }
+
+    int map_bottom_y = world->height * world->tile_size;
+
+    // 2. Checa se o jogador (pela cabeça, p->y) passou desse limite
+    if (p->y > map_bottom_y) {
+        printf("DANO! Caiu do mapa.\n");
+        
+        // 3. Aplica o mesmo respawn do espinho
         p->x = 100;
         p->y = 100;
         p->vel_x = 0;

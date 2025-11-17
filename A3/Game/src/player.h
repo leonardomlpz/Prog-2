@@ -27,6 +27,7 @@ typedef struct Player{
     bool jump_pressed;
 
     ALLEGRO_BITMAP *spritesheet; // folha de sprites
+    ALLEGRO_BITMAP *heart_icon;
 
     int facing_direction;    // 1 == Direita, -1 = Esquerda
     int anim_row;           // Qual linha da spritesheet (0=parado, 1=andando)

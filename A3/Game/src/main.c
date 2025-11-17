@@ -189,6 +189,25 @@ int main()
                 
                     world_draw(world);
                     player_draw(player, world);
+
+                    al_use_transform(&t); // 't' é a transformação 1:1 que você já resetou
+
+                    if (player->heart_icon) {
+                        // Pega a largura do ícone para dar espaçamento
+                        int heart_width = al_get_bitmap_width(player->heart_icon);
+                        int padding = 4; // Espaço entre os corações
+
+                        // Desenha um coração para cada HP
+                        for (int i = 0; i < player->hp; i++) {
+                            al_draw_bitmap(
+                                player->heart_icon, 
+                                10 + (i * (heart_width + padding)), // Posição X
+                                10, // Posição Y
+                                0
+                            );
+                        }
+                    }
+
                     break;
 
                 case STATE_PAUSE:
