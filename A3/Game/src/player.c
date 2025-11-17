@@ -6,7 +6,7 @@
 #include <allegro5/allegro_primitives.h>
 
 // Constantes da física do jogador (você pode ajustar)
-#define PLAYER_SPEED 5.0
+#define PLAYER_SPEED 3.75
 #define JUMP_POWER 10.0
 #define GRAVITY 0.5
 
