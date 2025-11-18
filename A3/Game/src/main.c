@@ -9,6 +9,7 @@
 #include "player.h"
 #include "menu.h"
 #include "world.h"
+#include "obstacle.h"
 
 // Funcao de verificacao de erro
 void must_init(bool test, const char *description)
@@ -86,6 +87,7 @@ int main()
     Player *player = player_create(100, 100);
     Menu *menu = menu_create();
     World *world = world_create();
+    Obstacle *spike_head = obstacle_create(SPIKE_HEAD_VERTICAL, 643, 123);
 
     // Nossos objetos de jogo serao criados aqui (ex: Player* player = player_create();)
     
@@ -134,6 +136,7 @@ int main()
                 if(event.type == ALLEGRO_EVENT_TIMER) {
                     player_update(player, world);
                     world_update(world, player);
+                    obstacle_update(spike_head, player, world);
                     redraw = true;
                 }
                 break;
@@ -188,6 +191,7 @@ int main()
                     al_use_transform(&transform);
                 
                     world_draw(world);
+                    obstacle_draw(spike_head, world);
                     player_draw(player, world);
 
                     al_use_transform(&t); // 't' é a transformação 1:1 que você já resetou
@@ -248,6 +252,7 @@ int main()
     al_destroy_display(disp);
     al_destroy_timer(timer);
     world_destroy(world);
+    obstacle_destroy(spike_head);
     al_destroy_event_queue(queue);
 
     return 0;

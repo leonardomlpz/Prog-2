@@ -3,6 +3,7 @@
 #include "world.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <allegro5/allegro_primitives.h>
 
 // Constantes da física do jogador (você pode ajustar)
@@ -44,6 +45,7 @@ Player* player_create(float start_x, float start_y) {
         printf("Aviso: Nao foi possivel carregar assets/heart.png\n");
     }
 
+    p->invulnerable_timer = 0.0;
     p->anim_row = 0;        // Começa na linha 0 (parado)
     p->current_frame = 0;
     p->frame_timer = 0;
@@ -102,6 +104,8 @@ void player_handle_event(Player* p, ALLEGRO_EVENT* event) {
 
 // --- Atualizar Lógica (Física) ---
 void player_update(Player *p, World *world) {
+    if (p->invulnerable_timer > 0)
+        p->invulnerable_timer -= 1.0 / FPS;
 
     // 1. Define a velocidade horizontal baseado no estado do input
     p->vel_x = 0;
@@ -241,13 +245,8 @@ void player_update(Player *p, World *world) {
     
     if (tile_at_player == 243) { 
         printf("DANO! Pisou no espinho.\n");
-        
-        // Respawn simples (volta pro inicio)
-        p->x = 100;
-        p->y = 100;
-        p->vel_x = 0;
-        p->vel_y = 0;
-        p->hp--; // Perde vida
+        if (player_take_damage(p))
+            player_respawn(p);
     }
 
     int map_bottom_y = world->height * world->tile_size;
@@ -255,14 +254,39 @@ void player_update(Player *p, World *world) {
     // 2. Checa se o jogador (pela cabeça, p->y) passou desse limite
     if (p->y > map_bottom_y) {
         printf("DANO! Caiu do mapa.\n");
-        
-        // 3. Aplica o mesmo respawn do espinho
-        p->x = 100;
-        p->y = 100;
-        p->vel_x = 0;
-        p->vel_y = 0;
-        p->hp--; // Perde vida
+        if (player_take_damage(p)) // Se o dano foi aplicado...
+            player_respawn(p); // ...faz o respawn.
     }
+}
+
+// (Implementação da função de dano)
+bool player_take_damage(Player *p) {
+    // Se já estiver invulnerável, não faz nada e retorna 'false'
+    if (p->invulnerable_timer > 0) {
+        return false;
+    }
+
+    // Se não estava invulnerável:
+    printf("DANO! HP: %d\n", p->hp - 1);
+    p->hp--; 
+    
+    // Ativa a invulnerabilidade por 2 segundos
+    p->invulnerable_timer = 2.0; 
+    
+    // Aplica um pequeno "knockback" (pulo/empurrão)
+    p->vel_y = -5; // Pulo para cima
+    p->vel_x = -5 * p->facing_direction; // Empurrão para trás
+    
+    return true; // Dano foi aplicado
+}
+
+// (Implementação da função de respawn)
+void player_respawn(Player *p) {
+    printf("Respawn!\n");
+    p->x = 100;
+    p->y = 100;
+    p->vel_x = 0;
+    p->vel_y = 0;
 }
 
 // --- Desenhar Jogador ---
