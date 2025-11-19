@@ -1,0 +1,1 @@
+python3 tools/tmx_to_csv.py assets/level1.tmx && make clean && make && ./build/game
