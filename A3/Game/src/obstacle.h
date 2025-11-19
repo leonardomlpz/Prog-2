@@ -9,8 +9,8 @@
 typedef enum {
     SPIKE_HEAD_VERTICAL, // O Spike Head que sobe e desce
     SPIKE_HEAD_HORIZONTAL,
-    ROCK_HEAD_VERTICAL,
-    ROCK_HEAD_HORIZONTAL
+    SAW_HORIZONTAL,
+    ROCK_HEAD_RECTANGULAR
 } ObstacleType;
 
 typedef enum {
@@ -29,6 +29,7 @@ typedef struct {
     // Propriedades físicas e visuais
     ObstacleState state;
     ObstacleType type;
+    int sprite_width, sprite_height;
     int width, height; // Tamanho da Hitbox
     ALLEGRO_BITMAP *spritesheet;
     

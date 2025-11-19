@@ -87,7 +87,8 @@ int main()
     Player *player = player_create(100, 100);
     Menu *menu = menu_create();
     World *world = world_create();
-    Obstacle *spike_head = obstacle_create(SPIKE_HEAD_VERTICAL, 643, 123);
+    Obstacle *spike_head = obstacle_create(SPIKE_HEAD_VERTICAL, 483, 128);
+    Obstacle *rock_head = obstacle_create(ROCK_HEAD_RECTANGULAR, 1219, 128);
 
     // Nossos objetos de jogo serao criados aqui (ex: Player* player = player_create();)
     
@@ -137,6 +138,7 @@ int main()
                     player_update(player, world);
                     world_update(world, player);
                     obstacle_update(spike_head, player, world);
+                    obstacle_update(rock_head, player, world);
                     redraw = true;
                 }
                 break;
@@ -192,6 +194,7 @@ int main()
                 
                     world_draw(world);
                     obstacle_draw(spike_head, world);
+                    obstacle_draw(rock_head, world);
                     player_draw(player, world);
 
                     al_use_transform(&t); // 't' é a transformação 1:1 que você já resetou
@@ -253,6 +256,7 @@ int main()
     al_destroy_timer(timer);
     world_destroy(world);
     obstacle_destroy(spike_head);
+    obstacle_destroy(rock_head);
     al_destroy_event_queue(queue);
 
     return 0;

@@ -9,8 +9,8 @@ struct Player;
 
 // --- Constantes do Mapa ---
 #define TILE_SIZE 16
-#define MAP_WIDTH 50
-#define MAP_HEIGHT 19
+#define MAP_WIDTH 80
+#define MAP_HEIGHT 30
 
 // --- Estrutura do Mapa ---
 typedef struct {
