@@ -43,12 +43,12 @@ Obstacle* obstacle_create(ObstacleType type, float x, float y) {
         obs->sprite_width = 42;
         // Começa descendo (Velocidade Y positiva)
         obs->vel_x = 0;
-        obs->vel_y = 3.0; 
+        obs->vel_y = 10.0; 
         
         obs->state = OBS_STATE_MOVING;
         obs->anim_row = 1;     // Começa piscando (Blink)
         obs->num_frames = 4;   
-        obs->frame_delay = 0.1;
+        obs->frame_delay = 0.2;
     }
     
     if (!obs->spritesheet) {
@@ -89,16 +89,16 @@ void obstacle_update(Obstacle *obs, Player *p, World *world) {
                 // LÓGICA ESPECÍFICA DO ROCK HEAD (Gira em sentido horário)
                 if (obs->type == ROCK_HEAD_RECTANGULAR) {
                     if (obs->anim_row == 3) { // Bateu em BAIXO -> Vai para ESQUERDA
-                        obs->vel_y = 0; obs->vel_x = -3.0;
+                        obs->vel_y = 0; obs->vel_x = -10.0;
                     } 
                     else if (obs->anim_row == 4) { // Bateu na ESQUERDA -> Vai para CIMA
-                        obs->vel_x = 0; obs->vel_y = -3.0;
+                        obs->vel_x = 0; obs->vel_y = -10.0;
                     }
                     else if (obs->anim_row == 2) { // Bateu em CIMA -> Vai para DIREITA
-                        obs->vel_y = 0; obs->vel_x = 3.0;
+                        obs->vel_y = 0; obs->vel_x = 10.0;
                     }
                     else if (obs->anim_row == 5) { // Bateu na DIREITA -> Vai para BAIXO
-                        obs->vel_x = 0; obs->vel_y = 3.0;
+                        obs->vel_x = 0; obs->vel_y = 10.0;
                     }
                 }
                 // LÓGICA DO SPIKE HEAD (Apenas inverte Y ou X)
@@ -190,26 +190,26 @@ void obstacle_update(Obstacle *obs, Player *p, World *world) {
     // 3. CHECA COLISÃO COM O JOGADOR
     // ===============================================
     float ox1 = obs->x; float oy1 = obs->y;
-    float ox2 = obs->x + obs->width; float oy2 = obs->y + obs->height;
-    float px1 = p->x; float py1 = p->y;
-    float px2 = p->x + p->width; float py2 = p->y + p->height;
-    
-    // Se houver intersecção (AABB)
-    if (!(ox1 > px2 || ox2 < px1 || oy1 > py2 || oy2 < py1)) {
-        
-        // Se for ROCK HEAD: Verifica Esmagamento
-        if (obs->type == ROCK_HEAD_RECTANGULAR) {
+        float ox2 = obs->x + obs->width; float oy2 = obs->y + obs->height;
+        float px1 = p->x; float py1 = p->y;
+        float px2 = p->x + p->width; float py2 = p->y + p->height;
+
+        // Se houver intersecção (AABB)
+        if (!(ox1 > px2 || ox2 < px1 || oy1 > py2 || oy2 < py1)) {
+            
             bool crush = false;
-            if (obs->vel_y > 0) { // Descendo
+
+            // 1. VERIFICA ESMAGAMENTO (Prioridade Máxima)
+            if (obs->vel_y > 0) { // Descendo: Esmaga no chão
                 if (world_is_solid(world, p->x + p->width/2, p->y + p->height + 1)) crush = true;
             }
-            else if (obs->vel_y < 0) { // Subindo
+            else if (obs->vel_y < 0) { // Subindo: Esmaga no teto
                 if (world_is_solid(world, p->x + p->width/2, p->y - 1)) crush = true;
             }
-            else if (obs->vel_x > 0) { // Direita
+            else if (obs->vel_x > 0) { // Direita: Esmaga na parede direita
                 if (world_is_solid(world, p->x + p->width + 1, p->y + p->height/2)) crush = true;
             }
-            else if (obs->vel_x < 0) { // Esquerda
+            else if (obs->vel_x < 0) { // Esquerda: Esmaga na parede esquerda
                 if (world_is_solid(world, p->x - 1, p->y + p->height/2)) crush = true;
             }
 
@@ -217,12 +217,36 @@ void obstacle_update(Obstacle *obs, Player *p, World *world) {
                 printf("ESMAGADO!\n");
                 if (player_take_damage(p)) player_respawn(p);
             }
+            else {
+                // 2. LÓGICA DE ELEVADOR (Plataforma Móvel)
+                // Se o pé do jogador está próximo ao topo da pedra E ele não está subindo (pulo)
+                // (Usamos +10 de tolerância para garantir que pegue o contato)
+                if (py2 <= oy1 + 15 && p->vel_y >= 0) {
+                    
+                    // "Gruda" o jogador no topo
+                    p->y = obs->y - p->height;
+                    p->vel_y = 0;
+                    p->on_ground = true; // Permite pular de cima da pedra!
+                    
+                    // Move o jogador junto com a pedra (Horizontalmente)
+                    // (Verticalmente já é resolvido pelo 'p->y = obs->y...' acima a cada frame)
+                    p->x += obs->vel_x;
+                    
+                    // Se o jogador estava caindo (anim_row == 3), reseta para IDLE
+                    if (p->anim_row == 3) {
+                        p->state = IDLE; // Garante o estado
+                        p->anim_row = 0; // Linha do Idle (Ninja)
+                        p->num_frames = 11; // Idle do Ninja tem 11 frames
+                        p->current_frame = 0;
+                        p->frame_delay = 0.1; // Velocidade normal do Ninja
+                    }
+                } 
+                else {
+                    // 3. DANO DE CONTATO (Se tocar nos lados ou em baixo)
+                    if (player_take_damage(p)) player_respawn(p);
+                }
+            }
         }
-        // Se for OUTRO TIPO (Spike/Saw): Dano imediato
-        else {
-            if (player_take_damage(p)) player_respawn(p);
-        }
-    }
 }
 
 // --- Desenhar Obstáculo ---
