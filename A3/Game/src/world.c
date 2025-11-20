@@ -146,7 +146,11 @@ bool world_is_solid(World *m, int x, int y) {
     // Ar (0) não é sólido
     if (tile_gid == 0) return false;
 
-    if (tile_gid == 243) return false; // Espinho (243) NÃO é sólido, você atravessa
+    // Espinho não é sólido, você atravessa
+    if (tile_gid == 243) return false;
+
+    // Correntes não são solidas
+    if (tile_gid > 60 && tile_gid < 64) return false;
 
     // Se não for ar e não for perigo, deve ser sólido
     return true;

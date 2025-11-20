@@ -30,7 +30,7 @@ Obstacle* obstacle_create(ObstacleType type, float x, float y) {
         obs->sprite_width = 54;
         obs->sprite_height = 52;
         obs->vel_x = 0;
-        obs->vel_y = 1.5; // Velocidade de patrulha
+        obs->vel_y = 5; // Velocidade de patrulha
         obs->patrol_range = 0; // Sobe e desce 100 pixels
         obs->num_frames = 4; // Animação "Blink"
     }
@@ -103,8 +103,8 @@ void obstacle_update(Obstacle *obs, Player *p, World *world) {
                 }
                 // LÓGICA DO SPIKE HEAD (Apenas inverte Y ou X)
                 else if (obs->type == SPIKE_HEAD_VERTICAL) {
-                    if (obs->anim_row == 2) obs->vel_y = 2.0;
-                    else obs->vel_y = -2.0;
+                    if (obs->anim_row == 2) obs->vel_y = 5.0;
+                    else obs->vel_y = -5.0;
                 }
                 // (Adicione SPIKE_HEAD_HORIZONTAL aqui se precisar)
 
