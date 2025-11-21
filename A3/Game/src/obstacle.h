@@ -24,7 +24,6 @@ typedef struct {
     
     // Variáveis de patrulha
     float start_x, start_y; // Posição inicial (âncora)
-    float patrol_range;     // Distância que ele anda (ex: 100 pixels)
     
     // Propriedades físicas e visuais
     ObstacleState state;

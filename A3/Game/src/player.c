@@ -283,8 +283,8 @@ bool player_take_damage(Player *p) {
 // (Implementação da função de respawn)
 void player_respawn(Player *p) {
     printf("Respawn!\n");
-    p->x = 100;
-    p->y = 100;
+    p->x = 32;
+    p->y = 400;
     p->vel_x = 0;
     p->vel_y = 0;
 }

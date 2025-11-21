@@ -10,6 +10,7 @@
 #include "menu.h"
 #include "world.h"
 #include "obstacle.h"
+#include "enemy.h"
 
 // Funcao de verificacao de erro
 void must_init(bool test, const char *description)
@@ -84,14 +85,22 @@ int main()
 
     push_state(STATE_MENU);
 
-    Player *player = player_create(100, 100);
+    Player *player = player_create(32, 400);
     Menu *menu = menu_create();
     World *world = world_create();
     Obstacle *spike_head = obstacle_create(SPIKE_HEAD_VERTICAL, 483, 128);
-    Obstacle *rock_head = obstacle_create(ROCK_HEAD_RECTANGULAR, 1219, 128);
-
-    // Nossos objetos de jogo serao criados aqui (ex: Player* player = player_create();)
+    Obstacle *rock_head_1 = obstacle_create(ROCK_HEAD_RECTANGULAR, 1232, 32);
+    Obstacle *rock_head_2 = obstacle_create(ROCK_HEAD_RECTANGULAR, 672, 416);
+    Obstacle *saw = obstacle_create(SAW_HORIZONTAL, 890, 292);
+    Enemy *rhino = enemy_create(ENEMY_RHINO, 400, 400);
     
+    // Começa descendo
+    rock_head_1->vel_y = 10.0;
+    rock_head_1->vel_x = 0.0;
+    // Começa subindo
+    rock_head_2->vel_y = -10.0;
+    rock_head_2->vel_x = 0.0;
+
     ALLEGRO_EVENT event;
     al_start_timer(timer);
 
@@ -138,7 +147,10 @@ int main()
                     player_update(player, world);
                     world_update(world, player);
                     obstacle_update(spike_head, player, world);
-                    obstacle_update(rock_head, player, world);
+                    obstacle_update(rock_head_1, player, world);
+                    obstacle_update(rock_head_2, player, world);
+                    obstacle_update(saw, player, world);
+                    enemy_update(rhino, player, world);
                     redraw = true;
                 }
                 break;
@@ -193,23 +205,37 @@ int main()
                     al_use_transform(&transform);
                 
                     world_draw(world);
+
                     obstacle_draw(spike_head, world);
-                    obstacle_draw(rock_head, world);
+                    obstacle_draw(rock_head_1, world);
+                    obstacle_draw(rock_head_2, world);
+                    obstacle_draw(saw, world);
+
+                    enemy_draw(rhino, world);
+
                     player_draw(player, world);
 
+                    // ZONA SEM ZOOM
                     al_use_transform(&t); // 't' é a transformação 1:1 que você já resetou
 
                     if (player->heart_icon) {
-                        // Pega a largura do ícone para dar espaçamento
-                        int heart_width = al_get_bitmap_width(player->heart_icon);
-                        int padding = 4; // Espaço entre os corações
+                        int heart_w = al_get_bitmap_width(player->heart_icon);
+                        int heart_h = al_get_bitmap_height(player->heart_icon);
+                        
+                        // --- CONFIGURAÇÃO DE TAMANHO ---
+                        float hud_scale = 2.0; // Aumenta 3x (igual ao zoom do jogo)
+                        int padding = 10;      // Espaço maior entre os corações
+                        // -------------------------------
 
-                        // Desenha um coração para cada HP
+                        // Desenha os corações
                         for (int i = 0; i < player->hp; i++) {
-                            al_draw_bitmap(
-                                player->heart_icon, 
-                                10 + (i * (heart_width + padding)), // Posição X
-                                10, // Posição Y
+                            al_draw_scaled_bitmap(
+                                player->heart_icon,
+                                0, 0, heart_w, heart_h, // Origem (pega a imagem inteira)
+                                10 + (i * (heart_w * hud_scale + padding)), // Posição X na tela
+                                10,                                         // Posição Y na tela
+                                heart_w * hud_scale, // Largura Final (Aumentada)
+                                heart_h * hud_scale, // Altura Final (Aumentada)
                                 0
                             );
                         }
@@ -256,7 +282,9 @@ int main()
     al_destroy_timer(timer);
     world_destroy(world);
     obstacle_destroy(spike_head);
-    obstacle_destroy(rock_head);
+    obstacle_destroy(rock_head_1);
+    obstacle_destroy(rock_head_2);
+    obstacle_destroy(saw);
     al_destroy_event_queue(queue);
 
     return 0;
