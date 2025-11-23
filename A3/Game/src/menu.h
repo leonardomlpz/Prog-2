@@ -10,6 +10,9 @@ typedef struct {
     ALLEGRO_FONT* font;      // A fonte que vamos carregar
     int selected_option; // 0 = Iniciar, 1 = Sair
 
+    ALLEGRO_BITMAP *btn_play;
+    ALLEGRO_BITMAP *btn_close;
+    ALLEGRO_BITMAP *btn_settings;
 } Menu;
 
 // --- Protótipos das Funções ---

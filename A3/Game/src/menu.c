@@ -5,7 +5,7 @@
 
 // Definições do menu
 #define MENU_FONT_SIZE 32
-#define FONT_PATH "assets/Outwrite.ttf"
+#define FONT_PATH "assets/Fonte.ttf"
 
 // --- Criar Menu ---
 Menu* menu_create() {
@@ -22,6 +22,9 @@ Menu* menu_create() {
         free(m);
         return NULL;
     }
+
+    m->btn_play = al_load_bitmap("assets/Buttons/Play.png");
+    m->btn_close = al_load_bitmap("assets/Buttons/Close.png");
 
     m->selected_option = 0; // Começa em "Iniciar"
     printf("Menu criado!\n");
@@ -69,51 +72,43 @@ void menu_handle_event(Menu* m, ALLEGRO_EVENT* event, GameState* state, bool* do
     }
 }
 
-// --- Desenhar Menu ---
 void menu_draw(Menu* m) {
-    // Cores
-    ALLEGRO_COLOR color_selected = al_map_rgb(255, 0, 0); // Vermelho
-    ALLEGRO_COLOR color_default = al_map_rgb(255, 255, 255); // Branco
+    // Limpa a tela (opcional, pois main já limpa)
+    al_clear_to_color(al_map_rgb(20, 20, 30));
 
-    ALLEGRO_COLOR color_iniciar;
-    ALLEGRO_COLOR color_sair;
+    // Título com Fonte
+    al_draw_text(m->font, al_map_rgb(255, 255, 255), 
+                 SCREEN_WIDTH/2, 100, ALLEGRO_ALIGN_CENTER, "NINJA FROG ADVENTURE");
 
-    // Define a cor baseada na seleção
-    if (m->selected_option == 0) {
-        color_iniciar = color_selected;
-        color_sair = color_default;
-    } else {
-        color_iniciar = color_default;
-        color_sair = color_selected;
-    }
+    // Configuração dos Botões
+    float scale = 5.0; // Botões grandes (pixel art)
+    int w = al_get_bitmap_width(m->btn_play);
+    int h = al_get_bitmap_height(m->btn_play);
+    
+    float cx = SCREEN_WIDTH / 2 - (w * scale) / 2;
+    float cy = 300;
+    
+    // Cores de Seleção
+    ALLEGRO_COLOR c_sel = al_map_rgb(255, 255, 255); // Normal (Brilhante)
+    ALLEGRO_COLOR c_unsel = al_map_rgb(100, 100, 100); // Escuro
 
-    // Desenha o título (opcional)
-    al_draw_text(
-        m->font, 
-        color_default, 
-        SCREEN_WIDTH / 2, // Posição X (centro)
-        SCREEN_HEIGHT / 3, // Posição Y (um terço para baixo)
-        ALLEGRO_ALIGN_CENTER, // Alinhamento
-        "PLATAFORMA DE SOBREVIVENCIA"
+    // Botão PLAY (Opção 0)
+    al_draw_tinted_scaled_bitmap(
+        m->btn_play,
+        (m->selected_option == 0) ? c_sel : c_unsel,
+        0, 0, w, h,
+        cx, cy,
+        w * scale, h * scale,
+        0
     );
 
-    // Desenha a opção "Iniciar"
-    al_draw_text(
-        m->font, 
-        color_iniciar, 
-        SCREEN_WIDTH / 2, 
-        SCREEN_HEIGHT / 2, // Posição Y (meio)
-        ALLEGRO_ALIGN_CENTER, 
-        "Iniciar Jogo"
-    );
-
-    // Desenha a opção "Sair"
-    al_draw_text(
-        m->font, 
-        color_sair, 
-        SCREEN_WIDTH / 2, 
-        (SCREEN_HEIGHT / 2) + MENU_FONT_SIZE + 10, // Posição Y (logo abaixo de "Iniciar")
-        ALLEGRO_ALIGN_CENTER, 
-        "Sair"
+    // Botão CLOSE (Opção 1)
+    al_draw_tinted_scaled_bitmap(
+        m->btn_close,
+        (m->selected_option == 1) ? c_sel : c_unsel,
+        0, 0, w, h,
+        cx, cy + (h * scale) + 20, // 20px abaixo
+        w * scale, h * scale,
+        0
     );
 }
