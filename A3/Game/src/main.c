@@ -11,6 +11,7 @@
 #include "world.h"
 #include "obstacle.h"
 #include "enemy.h"
+#include "goal.h"
 
 // Funcao de verificacao de erro
 void must_init(bool test, const char *description)
@@ -93,6 +94,7 @@ int main()
     Obstacle *rock_head_2 = obstacle_create(ROCK_HEAD_RECTANGULAR, 672, 416);
     Obstacle *saw = obstacle_create(SAW_HORIZONTAL, 890, 292);
     Enemy *rhino = enemy_create(ENEMY_RHINO, 400, 400);
+    Goal *trophy = goal_create(768,352);
     
     // Começa descendo
     rock_head_1->vel_y = 10.0;
@@ -151,6 +153,13 @@ int main()
                     obstacle_update(rock_head_2, player, world);
                     obstacle_update(saw, player, world);
                     enemy_update(rhino, player, world);
+                    goal_update(trophy, player);
+
+                    if (player->hp <= 0)
+                        change_state(STATE_GAME_OVER_LOSE);
+                    else if (player->state == WIN)
+                        change_state(STATE_GAME_OVER_WIN);
+
                     redraw = true;
                 }
                 break;
@@ -212,6 +221,8 @@ int main()
                     obstacle_draw(saw, world);
 
                     enemy_draw(rhino, world);
+
+                    goal_draw(trophy, world);
 
                     player_draw(player, world);
 
@@ -285,6 +296,7 @@ int main()
     obstacle_destroy(rock_head_1);
     obstacle_destroy(rock_head_2);
     obstacle_destroy(saw);
+    goal_destroy(trophy);
     al_destroy_event_queue(queue);
 
     return 0;

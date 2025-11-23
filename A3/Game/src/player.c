@@ -246,17 +246,11 @@ void player_update(Player *p, World *world) {
     if (tile_at_player == 243) { 
         printf("DANO! Pisou no espinho.\n");
         if (player_take_damage(p))
-            player_respawn(p);
+            if (p->hp > 0)
+                player_respawn(p);
     }
 
-    int map_bottom_y = world->height * world->tile_size;
-
-    // 2. Checa se o jogador (pela cabeça, p->y) passou desse limite
-    if (p->y > map_bottom_y) {
-        printf("DANO! Caiu do mapa.\n");
-        if (player_take_damage(p)) // Se o dano foi aplicado...
-            player_respawn(p); // ...faz o respawn.
-    }
+    return;
 }
 
 // (Implementação da função de dano)
@@ -270,6 +264,11 @@ bool player_take_damage(Player *p) {
     printf("DANO! HP: %d\n", p->hp - 1);
     p->hp--; 
     
+    if (p->hp <= 0) {
+        printf("GAME OVER! A vida chegou a zero.\n");
+        return true;
+    }
+
     // Ativa a invulnerabilidade por 2 segundos
     p->invulnerable_timer = 2.0; 
     
