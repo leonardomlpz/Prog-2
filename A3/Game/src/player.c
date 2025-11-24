@@ -32,6 +32,7 @@ Player* player_create(float start_x, float start_y) {
     p->move_left = false;
     p->move_right = false;
     p->jump_pressed = false;
+    p->level_complete = false;
 
     p->spritesheet = al_load_bitmap("assets/ninja_sheet.png");
     if (!p->spritesheet) {
@@ -327,4 +328,16 @@ void player_draw(Player *p, World *world) {
         al_map_rgb(0, 255, 0), 1
     );
     
+}
+
+void player_reset(Player *p) {
+    p->x = 100; // Posição inicial X
+    p->y = 100; // Posição inicial Y
+    p->vel_x = 0;
+    p->vel_y = 0;
+    p->hp = 5;  // Restaura a vida
+    p->state = IDLE;
+    p->level_complete = false; // Remove a vitória
+    p->invulnerable_timer = 0;
+    printf("Jogo Resetado!\n");
 }

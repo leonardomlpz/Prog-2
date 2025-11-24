@@ -11,7 +11,6 @@
 #include "world.h"
 #include "obstacle.h"
 #include "enemy.h"
-#include "goal.h"
 
 // Funcao de verificacao de erro
 void must_init(bool test, const char *description)
@@ -94,7 +93,7 @@ int main()
     Obstacle *rock_head_2 = obstacle_create(ROCK_HEAD_RECTANGULAR, 672, 416);
     Obstacle *saw = obstacle_create(SAW_HORIZONTAL, 890, 292);
     Enemy *rhino = enemy_create(ENEMY_RHINO, 400, 400);
-    Goal *trophy = goal_create(768,352);
+    Obstacle *trophy = obstacle_create(GOAL_TROPHY, 768,352);
     
     // Começa descendo
     rock_head_1->vel_y = 10.0;
@@ -152,12 +151,12 @@ int main()
                     obstacle_update(rock_head_1, player, world);
                     obstacle_update(rock_head_2, player, world);
                     obstacle_update(saw, player, world);
+                    obstacle_update(trophy, player, world);
                     enemy_update(rhino, player, world);
-                    goal_update(trophy, player);
 
                     if (player->hp <= 0)
                         change_state(STATE_GAME_OVER_LOSE);
-                    else if (player->state == WIN)
+                    else if (player->level_complete)
                         change_state(STATE_GAME_OVER_WIN);
 
                     redraw = true;
@@ -182,10 +181,36 @@ int main()
 
             case STATE_GAME_OVER_WIN:
             case STATE_GAME_OVER_LOSE:
-                // (Aqui chamaremos game_over_handle_event(&event, &state))
-                if(event.type == ALLEGRO_EVENT_TIMER) {
-                    redraw = true;
+                if (event.type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN) {
+                    int mx = event.mouse.x;
+                    int my = event.mouse.y;
+                    int btn_size = 21 * 4; // Largura aprox do botão (21px) * escala (4.0)
+                    int btn_x_center = (SCREEN_WIDTH / 2) - (btn_size / 2);
+
+                    // Clique no RESTART (Y aprox 300)
+                    if (mx >= btn_x_center && mx <= btn_x_center + btn_size &&
+                        my >= 300 && my <= 300 + btn_size) {
+                        
+                        player_reset(player); // Reseta vida e posição
+                        
+                        // Reseta pilha de estados para voltar ao jogo limpo
+                        stack_top = -1; 
+                        push_state(STATE_GAMEPLAY);
+                    }
+
+                    // Clique no BACK (Y aprox 450)
+                    if (mx >= btn_x_center && mx <= btn_x_center + btn_size &&
+                        my >= 450 && my <= 450 + btn_size) {
+                        
+                        player_reset(player);
+                        
+                        // Volta para o Menu
+                        stack_top = -1;
+                        push_state(STATE_MENU);
+                    }
                 }
+                
+                if(event.type == ALLEGRO_EVENT_TIMER) redraw = true;
                 break;
         }
 
@@ -219,10 +244,9 @@ int main()
                     obstacle_draw(rock_head_1, world);
                     obstacle_draw(rock_head_2, world);
                     obstacle_draw(saw, world);
+                    obstacle_draw(trophy, world);
 
                     enemy_draw(rhino, world);
-
-                    goal_draw(trophy, world);
 
                     player_draw(player, world);
 
@@ -277,7 +301,57 @@ int main()
                     break;
                 case STATE_GAME_OVER_WIN:
                 case STATE_GAME_OVER_LOSE:
-                    // (Aqui chamaremos game_over_draw())
+                    // 1. Desenha o jogo congelado no fundo (COM ZOOM)
+                    {
+                        ALLEGRO_TRANSFORM transform;
+                        al_identity_transform(&transform);
+                        al_scale_transform(&transform, GAME_SCALE, GAME_SCALE);
+                        al_use_transform(&transform);
+
+                        world_draw(world);
+                        player_draw(player, world);
+                        // (Desenhe os inimigos aqui se quiser que apareçam no fundo)
+                    }
+
+                    // 2. Desenha a Interface (SEM ZOOM / 1:1)
+                    al_use_transform(&t); // Reseta
+
+                    // Tela Escura
+                    al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
+                    al_draw_filled_rectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, al_map_rgba_f(0, 0, 0, 0.7));
+                    al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_INVERSE_ALPHA);
+
+                    // Título
+                    if (current_state == STATE_GAME_OVER_WIN) {
+                        al_draw_text(menu->font, al_map_rgb(255, 255, 0), 
+                            SCREEN_WIDTH/2, 150, ALLEGRO_ALIGN_CENTER, "F ASE  C O M P L E T A !");
+                    } else {
+                        al_draw_text(menu->font, al_map_rgb(255, 0, 0), 
+                            SCREEN_WIDTH/2, 150, ALLEGRO_ALIGN_CENTER, "G A M E  O V E R");
+                    }
+
+                    // Botões (Centralizados)
+                    float scale = 4.0;
+
+                    // RESTART (No meio)
+                    if (menu->btn_restart) {
+                        int w = al_get_bitmap_width(menu->btn_restart);
+                        int h = al_get_bitmap_height(menu->btn_restart);
+                        al_draw_scaled_bitmap(menu->btn_restart, 
+                            0, 0, w, h,
+                            (SCREEN_WIDTH/2) - (w*scale)/2, 300, // X, Y
+                            w*scale, h*scale, 0);
+                    }
+
+                    // BACK/MENU (Um pouco abaixo)
+                    if (menu->btn_back) {
+                        int w = al_get_bitmap_width(menu->btn_back);
+                        int h = al_get_bitmap_height(menu->btn_back);
+                        al_draw_scaled_bitmap(menu->btn_back, 
+                            0, 0, w, h,
+                            (SCREEN_WIDTH/2) - (w*scale)/2, 450, // X, Y
+                            w*scale, h*scale, 0);
+                    }
                     break;
             }
 
@@ -289,15 +363,16 @@ int main()
     // --- Finalizacao ---
     player_destroy(player);
     menu_destroy(menu);
-    al_destroy_display(disp);
     al_destroy_timer(timer);
     world_destroy(world);
     obstacle_destroy(spike_head);
     obstacle_destroy(rock_head_1);
     obstacle_destroy(rock_head_2);
     obstacle_destroy(saw);
-    goal_destroy(trophy);
+    obstacle_destroy(trophy);
+    enemy_destroy(rhino);
     al_destroy_event_queue(queue);
+    al_destroy_display(disp);
 
     return 0;
 }

@@ -27,6 +27,7 @@ typedef struct Player{
     bool move_left;
     bool move_right;
     bool jump_pressed;
+    bool level_complete;
 
     ALLEGRO_BITMAP *spritesheet; // folha de sprites
     ALLEGRO_BITMAP *heart_icon;
@@ -55,5 +56,7 @@ bool player_take_damage(Player *p);
 
 // Teleporta o jogador de volta ao início.
 void player_respawn(Player *p);
+
+void player_reset(Player *p);
 
 #endif

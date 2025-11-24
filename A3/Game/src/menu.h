@@ -12,6 +12,8 @@ typedef struct {
 
     ALLEGRO_BITMAP *btn_play;
     ALLEGRO_BITMAP *btn_close;
+    ALLEGRO_BITMAP *btn_restart;
+    ALLEGRO_BITMAP *btn_back;
     ALLEGRO_BITMAP *btn_settings;
 } Menu;
 

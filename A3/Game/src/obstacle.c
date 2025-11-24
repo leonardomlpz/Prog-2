@@ -73,6 +73,26 @@ Obstacle* obstacle_create(ObstacleType type, float x, float y) {
         obs->frame_delay = 0.05; // Gira rápido
     }
 
+    else if (type == GOAL_TROPHY) {
+        obs->spritesheet = al_load_bitmap("assets/End.png");
+        
+        // Hitbox (menor que o sprite para ser preciso)
+        obs->width = 40;
+        obs->height = 40;
+        
+        // Tamanho do Sprite (Pixel Adventure End.png é 64x64)
+        obs->sprite_width = 64;
+        obs->sprite_height = 64;
+
+        obs->vel_x = 0;
+        obs->vel_y = 0;
+        
+        obs->state = OBS_STATE_MOVING; // (Usa a lógica padrão de animar)
+        obs->anim_row = 0;     // Linha única
+        obs->num_frames = 8;   // Tem 8 frames na animação
+        obs->frame_delay = 0.1;
+    }
+
     if (!obs->spritesheet) {
         printf("ERRO: Nao foi possivel carregar a folha de sprites do obstaculo\n");
         free(obs);
@@ -216,9 +236,12 @@ void obstacle_update(Obstacle *obs, Player *p, World *world) {
     
     // Se houver intersecção
     if (!(ox1 > px2 || ox2 < px1 || oy1 > py2 || oy2 < py1)) {
-        
+        if (obs->type == GOAL_TROPHY) {
+            printf("VITÓRIA\n");
+            p->level_complete = true;
+        }
         // ROCK HEAD: Verifica Esmagamento + Elevador
-        if (obs->type == ROCK_HEAD_RECTANGULAR) {
+        else if (obs->type == ROCK_HEAD_RECTANGULAR) {
             bool crush = false;
             if (obs->vel_y > 0 && world_is_solid(world, p->x + p->width/2, p->y + p->height + 1)) crush = true;
             else if (obs->vel_y < 0 && world_is_solid(world, p->x + p->width/2, p->y - 1)) crush = true;
@@ -240,9 +263,7 @@ void obstacle_update(Obstacle *obs, Player *p, World *world) {
                         p->state = IDLE; p->anim_row = 0; p->num_frames = 11;
                         p->current_frame = 0; p->frame_delay = 0.1;
                     }
-                } else {
-                    if (player_take_damage(p)) player_respawn(p);
-                }
+                } else if (player_take_damage(p)) player_respawn(p);
             }
         }
         // SERRAS E SPIKES: Dano Imediato

@@ -25,6 +25,9 @@ Menu* menu_create() {
 
     m->btn_play = al_load_bitmap("assets/Buttons/Play.png");
     m->btn_close = al_load_bitmap("assets/Buttons/Close.png");
+    m->btn_restart = al_load_bitmap("assets/Buttons/Restart.png");
+    m->btn_back = al_load_bitmap("assets/Buttons/Back.png");
+    m->btn_settings = al_load_bitmap("assets/Buttons/Settings.png");
 
     m->selected_option = 0; // Começa em "Iniciar"
     printf("Menu criado!\n");
@@ -35,6 +38,13 @@ Menu* menu_create() {
 void menu_destroy(Menu* m) {
     if (m) {
         al_destroy_font(m->font);
+
+        if (m->btn_restart) al_destroy_bitmap(m->btn_restart);
+        if (m->btn_back) al_destroy_bitmap(m->btn_back);
+        if (m->btn_play) al_destroy_bitmap(m->btn_play);
+        if (m->btn_close) al_destroy_bitmap(m->btn_close);
+        if (m->btn_settings) al_destroy_bitmap(m->btn_settings);
+
         free(m);
         printf("Menu destruído.\n");
     }

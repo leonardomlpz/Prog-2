@@ -10,7 +10,8 @@ typedef enum {
     SPIKE_HEAD_VERTICAL, // O Spike Head que sobe e desce
     SPIKE_HEAD_HORIZONTAL,
     SAW_HORIZONTAL,
-    ROCK_HEAD_RECTANGULAR
+    ROCK_HEAD_RECTANGULAR,
+    GOAL_TROPHY
 } ObstacleType;
 
 typedef enum {
