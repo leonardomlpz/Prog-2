@@ -4,7 +4,7 @@
 #include <stdlib.h>
 
 // Definições do menu
-#define MENU_FONT_SIZE 32
+#define MENU_FONT_SIZE 64
 #define FONT_PATH "assets/Fonte.ttf"
 
 // --- Criar Menu ---

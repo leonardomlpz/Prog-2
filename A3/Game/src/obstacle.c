@@ -332,11 +332,11 @@ void obstacle_draw(Obstacle *obs, World *world) {
     }
     
     // Debug Hitbox
-    al_draw_rectangle(
+    /*al_draw_rectangle(
         obs->x - world->camera_x, 
         obs->y - world->camera_y, 
         obs->x + obs->width - world->camera_x, 
         obs->y + obs->height - world->camera_y, 
         al_map_rgb(255, 0, 0), 1
-    );
+    );*/
 }

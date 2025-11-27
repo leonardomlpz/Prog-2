@@ -95,7 +95,7 @@ int main()
     Enemy *rhino = enemy_create(ENEMY_RHINO, 400, 400);
     Enemy *bird = enemy_create(ENEMY_BLUEBIRD, 992, 208);
     Enemy *mushroom = enemy_create(ENEMY_MUSHROOM, 208, 240);
-    Obstacle *trophy = obstacle_create(GOAL_TROPHY, 768,352);
+    Obstacle *trophy = obstacle_create(GOAL_TROPHY, 758,346);
     
     // Começa descendo
     rock_head_1->vel_y = 10.0;

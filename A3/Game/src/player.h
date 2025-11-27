@@ -12,7 +12,8 @@ typedef enum {
     JUMPING,
     CROUCHING,
     INTERACTING,
-    WIN
+    WIN,
+    HIT
 } PlayerState;
 
 typedef struct Player{
