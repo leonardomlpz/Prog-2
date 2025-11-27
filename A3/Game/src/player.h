@@ -31,16 +31,16 @@ typedef struct Player{
     bool crouch_pressed;
     bool level_complete;
 
-    ALLEGRO_BITMAP *spritesheet; // folha de sprites
+    ALLEGRO_BITMAP *spritesheet;
     ALLEGRO_BITMAP *heart_icon;
 
     float invulnerable_timer;
     int facing_direction;    // 1 == Direita, -1 = Esquerda
-    int anim_row;           // Qual linha da spritesheet (0=parado, 1=andando)
-    int current_frame;      // Qual coluna (frame) dessa animação
+    int anim_row;
+    int current_frame;
     float frame_timer;      // Um contador para saber quando mudar de frame
     float frame_delay;      // O tempo (em segundos) entre cada frame
-    int num_frames;         // Quantos frames tem a animação atual
+    int num_frames;
 } Player;
 
 Player *player_create(float start_x, float start_y);

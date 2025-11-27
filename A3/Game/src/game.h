@@ -9,7 +9,7 @@
 
 #define GAME_SCALE 2.25
 
-// Nossa máquina de estados do jogo
+// Máquina de estados do jogo
 typedef enum {
     STATE_MENU,
     STATE_GAMEPLAY,

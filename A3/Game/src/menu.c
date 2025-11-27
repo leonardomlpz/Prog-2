@@ -1,5 +1,5 @@
 #include "menu.h"
-#include "game.h" // Para SCREEN_WIDTH e SCREEN_HEIGHT
+#include "game.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -7,7 +7,6 @@
 #define MENU_FONT_SIZE 64
 #define FONT_PATH "assets/Fonte.ttf"
 
-// --- Criar Menu ---
 Menu* menu_create() {
     Menu* m = (Menu*) malloc(sizeof(Menu));
     if (!m) {
@@ -34,7 +33,6 @@ Menu* menu_create() {
     return m;
 }
 
-// --- Destruir Menu ---
 void menu_destroy(Menu* m) {
     if (m) {
         al_destroy_font(m->font);
@@ -50,9 +48,8 @@ void menu_destroy(Menu* m) {
     }
 }
 
-// --- Tratar Eventos (Input: Teclado e Mouse) ---
+// Tratar Eventos (Input: Teclado e Mouse)
 void menu_handle_event(Menu* m, ALLEGRO_EVENT* event, GameState* state, bool* done) {
-    
     // Configuração igual à do draw para calcular colisão
     float scale = 5.0;
     int w_play = al_get_bitmap_width(m->btn_play);
@@ -67,7 +64,7 @@ void menu_handle_event(Menu* m, ALLEGRO_EVENT* event, GameState* state, bool* do
     float x_close = (SCREEN_WIDTH / 2) - ((w_close * scale) / 2);
     float y_close = y_play + (h_play * scale) + 20;
 
-    // --- 1. TECLADO ---
+    // TECLADO
     if (event->type == ALLEGRO_EVENT_KEY_DOWN) {
         switch (event->keyboard.keycode) {
             case ALLEGRO_KEY_W: 
@@ -90,7 +87,7 @@ void menu_handle_event(Menu* m, ALLEGRO_EVENT* event, GameState* state, bool* do
         }
     }
     
-    // --- 2. MOUSE (Movimento - Hover) ---
+    // 2. MOUSE
     else if (event->type == ALLEGRO_EVENT_MOUSE_AXES) {
         int mx = event->mouse.x;
         int my = event->mouse.y;
@@ -107,7 +104,7 @@ void menu_handle_event(Menu* m, ALLEGRO_EVENT* event, GameState* state, bool* do
         }
     }
 
-    // --- 3. MOUSE (Clique) ---
+    // MOUSE (Clique)
     else if (event->type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN) {
         if (event->mouse.button == 1) { // Botão esquerdo
             // Apenas confirma a opção que já foi selecionada pelo Hover
@@ -129,7 +126,7 @@ void menu_handle_event(Menu* m, ALLEGRO_EVENT* event, GameState* state, bool* do
 }
 
 void menu_draw(Menu* m) {
-    // Limpa a tela (opcional, pois main já limpa)
+    // Limpa a tela
     al_clear_to_color(al_map_rgb(20, 20, 30));
 
     // Título com Fonte
@@ -137,7 +134,7 @@ void menu_draw(Menu* m) {
                  SCREEN_WIDTH/2, 100, ALLEGRO_ALIGN_CENTER, "NINJA FROG ADVENTURE");
 
     // Configuração dos Botões
-    float scale = 5.0; // Botões grandes (pixel art)
+    float scale = 5.0; // Botões grandes 
     int w = al_get_bitmap_width(m->btn_play);
     int h = al_get_bitmap_height(m->btn_play);
     
@@ -163,7 +160,7 @@ void menu_draw(Menu* m) {
         m->btn_close,
         (m->selected_option == 1) ? c_sel : c_unsel,
         0, 0, w, h,
-        cx, cy + (h * scale) + 20, // 20px abaixo
+        cx, cy + (h * scale) + 20,
         w * scale, h * scale,
         0
     );

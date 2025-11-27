@@ -1,10 +1,9 @@
 #include <stdio.h>
 #include <allegro5/allegro5.h>
 #include <allegro5/allegro_primitives.h>
-#include <allegro5/allegro_font.h>      // Para o menu e HUD
-#include <allegro5/allegro_image.h>     // Para os sprites e background
+#include <allegro5/allegro_font.h>
+#include <allegro5/allegro_image.h>
 
-// Nossos arquivos de cabecalho
 #include "game.h"
 #include "player.h"
 #include "menu.h"
@@ -20,8 +19,8 @@ void must_init(bool test, const char *description)
     exit(1);
 }
 
-// --- Gerenciamento de Estados (Pilha) ---
-GameState state_stack[5]; // Uma pilha pequena é suficiente
+// Gerenciamento de Estados
+GameState state_stack[5];
 int stack_top = -1;
 
 void push_state(GameState state) {
@@ -66,11 +65,9 @@ int main()
     ALLEGRO_DISPLAY* disp = al_create_display(SCREEN_WIDTH, SCREEN_HEIGHT);
     must_init(disp, "display");
 
-    // --- Addons ---
-    // O enunciado pede sprites, background de imagem e menu
     must_init(al_init_primitives_addon(), "primitivas");
     must_init(al_init_image_addon(), "imagens");
-    must_init(al_init_font_addon(), "fontes"); // Precisaremos de al_init_ttf_addon() para fontes .ttf
+    must_init(al_init_font_addon(), "fontes");
     must_init(al_init_ttf_addon(), "ttf");
 
     // Registra as fontes de eventos
@@ -79,7 +76,7 @@ int main()
     al_register_event_source(queue, al_get_timer_event_source(timer));
     al_register_event_source(queue, al_get_mouse_event_source());
 
-    // --- Variaveis de Jogo ---
+    // Variaveis de Jogo
     bool done = false;
     bool redraw = true;
 
@@ -107,14 +104,12 @@ int main()
     ALLEGRO_EVENT event;
     al_start_timer(timer);
 
-    // --- Game Loop Principal ---
-    // Este loop agora gerencia os diferentes estados do jogo
+    // Game Loop Principal
     while(!done)
     {
         al_wait_for_event(queue, &event);
 
-        // --- Logica de Eventos ---
-        // Eventos que sao tratados em qualquer estado (ex: fechar a janela)
+        // Logica de Eventos
         if(event.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
             done = true;
         }
@@ -131,7 +126,6 @@ int main()
                     change_state(temp_state);
                 }
                 if(event.type == ALLEGRO_EVENT_TIMER) {
-                    // (Aqui chamaremos menu_update())
                     redraw = true;
                 }
                 break;
@@ -181,16 +175,15 @@ int main()
                     int mx = event.mouse.x;
                     int my = event.mouse.y;
                     
-                    // Tamanho aproximado dos botões (21px * 4.0 scale = 84px)
                     int btn_size = 84; 
                     int btn_x = (SCREEN_WIDTH / 2) - (btn_size / 2);
 
-                    // 1. Botão CONTINUAR (Y=250)
+                    // Botão CONTINUAR
                     if (mx >= btn_x && mx <= btn_x + btn_size && my >= 250 && my <= 250 + btn_size) {
                         pop_state(); // Despausa
                     }
 
-                    // 2. Botão REINICIAR (Y=350)
+                    // Botão REINICIAR
                     if (mx >= btn_x && mx <= btn_x + btn_size && my >= 350 && my <= 350 + btn_size) {
                         player_reset(player);
 
@@ -201,7 +194,7 @@ int main()
                         pop_state(); // Despausa o jogo já resetado
                     }
 
-                    // 3. Botão SAIR/MENU (Y=450)
+                    // Botão SAIR/MENU
                     if (mx >= btn_x && mx <= btn_x + btn_size && my >= 450 && my <= 450 + btn_size) {
                         player_reset(player);
                         stack_top = -1;      // Limpa a pilha
@@ -217,10 +210,10 @@ int main()
                 if (event.type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN) {
                     int mx = event.mouse.x;
                     int my = event.mouse.y;
-                    int btn_size = 21 * 4; // Largura aprox do botão (21px) * escala (4.0)
+                    int btn_size = 21 * 4;
                     int btn_x_center = (SCREEN_WIDTH / 2) - (btn_size / 2);
 
-                    // Clique no RESTART (Y aprox 300)
+                    // Clique no RESTART
                     if (mx >= btn_x_center && mx <= btn_x_center + btn_size &&
                         my >= 300 && my <= 300 + btn_size) {
                         
@@ -234,7 +227,7 @@ int main()
                         push_state(STATE_GAMEPLAY);
                     }
 
-                    // Clique no BACK (Y aprox 450)
+                    // Clique no BACK
                     if (mx >= btn_x_center && mx <= btn_x_center + btn_size &&
                         my >= 450 && my <= 450 + btn_size) {
                         
@@ -250,7 +243,7 @@ int main()
                 break;
         }
 
-        // --- Logica de Desenho ---
+        // Logica de Desenho
         if(redraw && al_is_event_queue_empty(queue))
         {
             al_clear_to_color(al_map_rgb(0, 0, 0));
@@ -289,16 +282,15 @@ int main()
                     player_draw(player, world);
 
                     // ZONA SEM ZOOM
-                    al_use_transform(&t); // 't' é a transformação 1:1 que você já resetou
+                    al_use_transform(&t);
 
                     if (player->heart_icon) {
                         int heart_w = al_get_bitmap_width(player->heart_icon);
                         int heart_h = al_get_bitmap_height(player->heart_icon);
                         
-                        // --- CONFIGURAÇÃO DE TAMANHO ---
-                        float hud_scale = 2.0; // Aumenta 3x (igual ao zoom do jogo)
-                        int padding = 10;      // Espaço maior entre os corações
-                        // -------------------------------
+                        // CONFIGURAÇÃO DE TAMANHO
+                        float hud_scale = 2.0;
+                        int padding = 10;      // Espaço entre os corações
 
                         // Desenha os corações
                         for (int i = 0; i < player->hp; i++) {
@@ -317,7 +309,7 @@ int main()
                     break;
 
                 case STATE_PAUSE:
-                    // 1. ZONA DO ZOOM (Desenha o jogo congelado no fundo)
+                    // ZONA DO ZOOM (Desenha o jogo congelado no fundo)
                     {
                         ALLEGRO_TRANSFORM transform;
                         al_identity_transform(&transform);
@@ -327,10 +319,9 @@ int main()
                         world_draw(world);
                         player_draw(player, world);
                         obstacle_draw(spike_head, world);
-                        // ... desenhe outros inimigos aqui se tiver ...
                     }
 
-                    // 2. ZONA SEM ZOOM (Interface e Botões)
+                    // ZONA SEM ZOOM (Interface e Botões)
                     al_use_transform(&t); // Reseta para 1:1 (Tela cheia 800x600)
 
                     // Tela Escura
@@ -343,7 +334,7 @@ int main()
                                  SCREEN_WIDTH / 2, 100, 
                                  ALLEGRO_ALIGN_CENTER, "PAUSADO");
 
-                    // --- DESENHO DOS BOTÕES ---
+                    // DESENHO DOS BOTÕES
                     float p_scale = 4.0;
                     
                     // Botão CONTINUAR (Usando o Play)
@@ -351,7 +342,7 @@ int main()
                         int w = al_get_bitmap_width(menu->btn_play);
                         int h = al_get_bitmap_height(menu->btn_play);
                         al_draw_scaled_bitmap(menu->btn_play, 0, 0, w, h,
-                            (SCREEN_WIDTH/2) - (w*p_scale)/2, 250, // Y = 250
+                            (SCREEN_WIDTH/2) - (w*p_scale)/2, 250,
                             w*p_scale, h*p_scale, 0);
                     }
 
@@ -360,7 +351,7 @@ int main()
                         int w = al_get_bitmap_width(menu->btn_restart);
                         int h = al_get_bitmap_height(menu->btn_restart);
                         al_draw_scaled_bitmap(menu->btn_restart, 0, 0, w, h,
-                            (SCREEN_WIDTH/2) - (w*p_scale)/2, 350, // Y = 350
+                            (SCREEN_WIDTH/2) - (w*p_scale)/2, 350,
                             w*p_scale, h*p_scale, 0);
                     }
 
@@ -369,13 +360,13 @@ int main()
                         int w = al_get_bitmap_width(menu->btn_back);
                         int h = al_get_bitmap_height(menu->btn_back);
                         al_draw_scaled_bitmap(menu->btn_back, 0, 0, w, h,
-                            (SCREEN_WIDTH/2) - (w*p_scale)/2, 450, // Y = 450
+                            (SCREEN_WIDTH/2) - (w*p_scale)/2, 450,
                             w*p_scale, h*p_scale, 0);
                     }
                     break;
                 case STATE_GAME_OVER_WIN:
                 case STATE_GAME_OVER_LOSE:
-                    // 1. Desenha o jogo congelado no fundo (COM ZOOM)
+                    // Desenha o jogo congelado no fundo (COM ZOOM)
                     {
                         ALLEGRO_TRANSFORM transform;
                         al_identity_transform(&transform);
@@ -384,10 +375,9 @@ int main()
 
                         world_draw(world);
                         player_draw(player, world);
-                        // (Desenhe os inimigos aqui se quiser que apareçam no fundo)
                     }
 
-                    // 2. Desenha a Interface (SEM ZOOM / 1:1)
+                    // Desenha a Interface (SEM ZOOM / 1:1)
                     al_use_transform(&t); // Reseta
 
                     // Tela Escura
@@ -398,7 +388,7 @@ int main()
                     // Título
                     if (current_state == STATE_GAME_OVER_WIN) {
                         al_draw_text(menu->font, al_map_rgb(255, 255, 0), 
-                            SCREEN_WIDTH/2, 150, ALLEGRO_ALIGN_CENTER, "F ASE  C O M P L E T A !");
+                            SCREEN_WIDTH/2, 150, ALLEGRO_ALIGN_CENTER, "F A S E  C O M P L E T A !");
                     } else {
                         al_draw_text(menu->font, al_map_rgb(255, 0, 0), 
                             SCREEN_WIDTH/2, 150, ALLEGRO_ALIGN_CENTER, "G A M E  O V E R");
@@ -407,7 +397,7 @@ int main()
                     // Botões (Centralizados)
                     float scale = 4.0;
 
-                    // RESTART (No meio)
+                    // RESTART
                     if (menu->btn_restart) {
                         int w = al_get_bitmap_width(menu->btn_restart);
                         int h = al_get_bitmap_height(menu->btn_restart);
@@ -434,7 +424,7 @@ int main()
         }
     }
 
-    // --- Finalizacao ---
+    // Finalizacao
     player_destroy(player);
     menu_destroy(menu);
     al_destroy_timer(timer);

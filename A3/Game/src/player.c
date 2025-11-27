@@ -84,14 +84,12 @@ void player_handle_event(Player* p, ALLEGRO_EVENT* event) {
 void player_update(Player *p, World *world) {
     if (p->invulnerable_timer > 0) p->invulnerable_timer -= 1.0 / FPS;
 
-    // --- 1. MÁQUINA DE ESTADOS E INPUTS (ALTERADO) ---
+    // MÁQUINA DE ESTADOS E INPUTS
     // Se estiver em HIT (Dano), bloqueia inputs de movimento
     if (p->state == HIT) {
         // Não faz nada, apenas espera. O código de física/colisão abaixo vai empurrá-lo.
     }
     else {
-        // --- AQUI DENTRO VEM TODA A LÓGICA DE CONTROLE QUE JÁ EXISTIA ---
-        
         // MUDANÇA DE ESTADO (AGACHAR)
         if (p->on_ground && p->crouch_pressed) {
             if (p->state != CROUCHING) {
@@ -132,7 +130,7 @@ void player_update(Player *p, World *world) {
     } // Fim do else (Controles Normais)
 
 
-    // --- 4. FÍSICA E COLISÃO (IGUAL) ---
+    // FÍSICA E COLISÃO
     p->vel_y += GRAVITY;
     if (p->vel_y > 15) p->vel_y = 15;
 
@@ -164,7 +162,7 @@ void player_update(Player *p, World *world) {
             p->vel_y = 0;
             p->on_ground = true;
             
-            // ALTERAÇÃO: Reset de pulo (mas não reseta se for HIT)
+            // Reset de pulo (mas não reseta se for HIT)
             if (p->state == JUMPING) p->state = IDLE;
         }
     }
@@ -176,7 +174,7 @@ void player_update(Player *p, World *world) {
         }
     }
 
-    // --- 5. ANIMAÇÃO (ALTERADO) ---
+    // ANIMAÇÃO
     if (p->state == HIT) {
         // Mantém a linha 4. Não faz nada aqui, a animação roda sozinha.
     }
@@ -197,7 +195,7 @@ void player_update(Player *p, World *world) {
         p->anim_row = 0; p->num_frames = 11; p->frame_delay = 0.05;
     }
 
-    // Avanço de frames (ALTERADO para resetar o HIT)
+    // Avanço de frames (para resetar o HIT)
     p->frame_timer += 1.0 / FPS; 
     if (p->frame_timer >= p->frame_delay) {
         p->current_frame++;
@@ -221,20 +219,16 @@ void player_update(Player *p, World *world) {
     }
 }
 
-// ... player_take_damage e player_respawn continuam iguais ...
-
 bool player_take_damage(Player *p) {
-    // Se já estiver invulnerável, ignora o dano (retorna false)
+    // Se já estiver invulnerável, ignora o dano
     if (p->invulnerable_timer > 0) return false;
 
     p->hp--; 
     
-    // SE MORREU (HP zerou):
     // Retorna true para que o main.c saiba que deve chamar o player_respawn
     if (p->hp <= 0) return true;
 
-    // SE SOBREVIVEU:
-    // Configura o estado HIT e a animação
+    // SE SOBREVIVEU: configura o estado HIT e a animação
     p->state = HIT;
     p->invulnerable_timer = 2.0; 
     
@@ -291,7 +285,7 @@ void player_draw(Player *p, World *world) {
     int flags = 0;
     if (p->facing_direction == -1) flags = ALLEGRO_FLIP_HORIZONTAL;
 
-    // --- ALTERAÇÃO: Efeito de Piscar ---
+    // ALTERAÇÃO: Efeito de Piscar
     bool draw = true;
     if (p->invulnerable_timer > 0) {
         // Pisca rapidamente

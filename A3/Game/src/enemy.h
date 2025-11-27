@@ -14,7 +14,7 @@ typedef enum {
 typedef enum {
     ENEMY_STATE_IDLE,
     ENEMY_STATE_RUN,
-    ENEMY_STATE_HIT_WALL // Específico do Rinoceronte
+    ENEMY_STATE_HIT_WALL
 } EnemyState;
 
 typedef struct {

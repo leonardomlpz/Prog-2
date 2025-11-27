@@ -6,8 +6,7 @@
 #include "game.h"
 #include "player.h"
 
-// --- Carregar Mapa do CSV ---
-// (Função "privada", só o world.c precisa dela)
+// Carregar Mapa do CSV
 static void world_load_csv(World *m, const char *filename) {
     FILE *file = fopen(filename, "r");
     if (!file) {
@@ -37,7 +36,6 @@ static void world_load_csv(World *m, const char *filename) {
     printf("Mapa '%s' carregado com sucesso!\n", filename);
 }
 
-// --- Criar Mapa ---
 World *world_create() {
     World *m = (World*) malloc(sizeof(World));
     if (!m) {
@@ -52,18 +50,16 @@ World *world_create() {
     m->camera_y = 0;
 
     // 1. Aloca memória para os tiles (zerado)
-    m->tiles = (int*) calloc(m->width * m->height, sizeof(int)); // Use calloc
+    m->tiles = (int*) calloc(m->width * m->height, sizeof(int));
     if (!m->tiles) {
         printf("Erro ao alocar tiles do world\n");
         free(m);
         return NULL;
     }
 
-    // 2. Carrega as imagens
     m->bg_image = al_load_bitmap("assets/background.png");
     if (!m->bg_image) printf("Aviso: Nao foi possivel carregar assets/background.png\n");
 
-    // Carrega a FOLHA MESTRA
     m->tileset_sheet = al_load_bitmap("assets/tileset_mestre.png");
     if (!m->tileset_sheet) {
         printf("ERRO: Nao foi possivel carregar assets/tileset_mestre.png\n");
@@ -72,14 +68,13 @@ World *world_create() {
         m->tileset_cols = al_get_bitmap_width(m->tileset_sheet) / m->tile_size;
     }
 
-    // 3. Carrega o mapa do CSV (que vai preencher m->tiles)
+    // Carrega o mapa do CSV (que vai preencher m->tiles)
     world_load_csv(m, "assets/level1.csv");
 
     printf("World criado!\n");
     return m;
 }
 
-// --- Destruir Mapa ---
 void world_destroy(World *m) {
     if (m) {
         if (m->tiles) free(m->tiles);
@@ -91,22 +86,46 @@ void world_destroy(World *m) {
     }
 }
 
-// --- Desenhar Mapa ---
 void world_draw(World *m) {
-    // 1. Desenha o Background com Parallax (Seu código está correto)
     if (m->bg_image) {
         int bg_w = al_get_bitmap_width(m->bg_image);
+        int bg_h = al_get_bitmap_height(m->bg_image);
+
+        // Dimensões da tela virtual
         float screen_w = SCREEN_WIDTH / GAME_SCALE;
-        float parallax_speed = 0.5; 
-        float bg_x = -((int)(m->camera_x * parallax_speed) % bg_w);
-        al_draw_bitmap(m->bg_image, bg_x, 0, 0);
-        if (bg_x + bg_w < screen_w) {
-            al_draw_bitmap(m->bg_image, bg_x + bg_w, 0, 0);
+        float screen_h = SCREEN_HEIGHT / GAME_SCALE;
+
+        // Calcula a escala para a imagem caber exatamente na ALTURA da tela
+        float scale = screen_h / (float)bg_h;
+        
+        // Largura final da imagem na tela após redimensionar
+        float scaled_w = bg_w * scale;
+
+        // Cálculo do Parallax
+        float parallax_speed = 0.5; // 0.0 = parado, 1.0 = acompanha o player
+        float bg_x = -(m->camera_x * parallax_speed);
+
+        // Desenha a imagem redimensionada na posição calculada
+        al_draw_scaled_bitmap(
+            m->bg_image,
+            0, 0, bg_w, bg_h,      // Origem (Imagem inteira)
+            bg_x, 0, scaled_w, screen_h, // Destino (Posição X variável, Altura fixa)
+            0
+        );
+        
+        // Se a imagem acabar antes da fase, desenha outra logo em seguida
+        if (bg_x + scaled_w < screen_w) {
+            al_draw_scaled_bitmap(
+                m->bg_image,
+                0, 0, bg_w, bg_h,
+                bg_x + scaled_w, 0, scaled_w, screen_h,
+                0
+            );
         }
     }
 
-    // 2. Desenha os Tiles do Mapa
-    if (!m->tileset_sheet) return; // Não desenha se a folha mestra falhou
+    // Desenha os Tiles do Mapa
+    if (!m->tileset_sheet) return;
 
     for (int y = 0; y < m->height; y++) {
         for (int x = 0; x < m->width; x++) {
@@ -115,7 +134,6 @@ void world_draw(World *m) {
             
             // Se gid for 0 (Ar), não desenha nada
             if (gid > 0) {
-                // Tiled GIDs começam em 1, nosso grid de imagem começa em 0
                 int tile_id = gid - 1; 
                 
                 // Calcula a posição (sx, sy) do tile na Folha Mestra
@@ -139,14 +157,14 @@ void world_draw(World *m) {
     }
 }
 
-// --- Verificar Colisão ---
+// Verificar Colisão
 bool world_is_solid(World *m, int x, int y) {
     int tile_gid = world_get_tile(m, x, y);
 
     // Ar (0) não é sólido
     if (tile_gid == 0) return false;
 
-    // Espinho não é sólido, você atravessa
+    // Espinho não é "sólido"
     if (tile_gid == 243) return false;
 
     // Correntes não são solidas
@@ -156,9 +174,8 @@ bool world_is_solid(World *m, int x, int y) {
     return true;
 }
 
-// --- Atualizar Câmera ---
+// Atualizar Câmera
 void world_update(World *m, struct Player *p) {
-    
     // Tela virtual (800 / 3 = aprox 266 pixels de visão)
     float screen_w = SCREEN_WIDTH / GAME_SCALE;
     float screen_h = SCREEN_HEIGHT / GAME_SCALE;

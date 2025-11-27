@@ -10,7 +10,7 @@ Obstacle* obstacle_create(ObstacleType type, float x, float y) {
 
     obs->x = x;
     obs->y = y;
-    obs->start_x = x; // Define a "âncora"
+    obs->start_x = x;
     obs->start_y = y;
     obs->type = type;
     
@@ -23,7 +23,6 @@ Obstacle* obstacle_create(ObstacleType type, float x, float y) {
     obs->frame_timer = 0;
     obs->frame_delay = 0.4; // Velocidade da animação
 
-    // Define as propriedades baseado no tipo
     if (type == SPIKE_HEAD_VERTICAL) {
         obs->spritesheet = al_load_bitmap("assets/Traps/spike_head_sheet.png");
         obs->width = 42;
@@ -33,7 +32,7 @@ Obstacle* obstacle_create(ObstacleType type, float x, float y) {
         obs->vel_x = 0;
         obs->vel_y = 6.0; // Velocidade de patrulha
         obs->anim_row = 1;
-        obs->num_frames = 4; // Animação "Blink"
+        obs->num_frames = 4;
         obs->frame_delay = 0.2;
     }
     else if (type == ROCK_HEAD_RECTANGULAR) {
@@ -43,20 +42,18 @@ Obstacle* obstacle_create(ObstacleType type, float x, float y) {
         obs->height = 36;
         obs->sprite_height = 42;
         obs->sprite_width = 42;
-        // Começa descendo (Velocidade Y positiva)
         obs->vel_x = 0;
         obs->vel_y = 6.0; 
         
         obs->state = OBS_STATE_MOVING;
-        obs->anim_row = 1;     // Começa piscando (Blink)
+        obs->anim_row = 1;
         obs->num_frames = 4;   
         obs->frame_delay = 0.2;
     }
     
     else if (type == SAW_HORIZONTAL) {
         obs->spritesheet = al_load_bitmap("assets/Traps/saw_sheet.png");
-        
-        // Hitbox um pouco menor que 38 já que a serra é redonda
+    
         obs->width = 30;  
         obs->height = 30;
         
@@ -68,28 +65,26 @@ Obstacle* obstacle_create(ObstacleType type, float x, float y) {
         obs->vel_y = 0;
 
         obs->state = OBS_STATE_MOVING;
-        obs->anim_row = 0;     // Só tem 1 linha
-        obs->num_frames = 8;   // A serra tem 8 frames girando
-        obs->frame_delay = 0.05; // Gira rápido
+        obs->anim_row = 0;
+        obs->num_frames = 8;
+        obs->frame_delay = 0.05;
     }
 
     else if (type == GOAL_TROPHY) {
         obs->spritesheet = al_load_bitmap("assets/End.png");
         
-        // Hitbox (menor que o sprite para ser preciso)
         obs->width = 40;
         obs->height = 40;
         
-        // Tamanho do Sprite (Pixel Adventure End.png é 64x64)
         obs->sprite_width = 64;
         obs->sprite_height = 64;
 
         obs->vel_x = 0;
         obs->vel_y = 0;
         
-        obs->state = OBS_STATE_MOVING; // (Usa a lógica padrão de animar)
-        obs->anim_row = 0;     // Linha única
-        obs->num_frames = 8;   // Tem 8 frames na animação
+        obs->state = OBS_STATE_MOVING;
+        obs->anim_row = 0;
+        obs->num_frames = 8;
         obs->frame_delay = 0.1;
     }
 
@@ -102,7 +97,6 @@ Obstacle* obstacle_create(ObstacleType type, float x, float y) {
     return obs;
 }
 
-// --- Destruir Obstáculo ---
 void obstacle_destroy(Obstacle *obs) {
     if (obs) {
         if (obs->spritesheet) al_destroy_bitmap(obs->spritesheet);
@@ -111,10 +105,7 @@ void obstacle_destroy(Obstacle *obs) {
 }
 
 void obstacle_update(Obstacle *obs, Player *p, World *world) {
-    
-    // ===============================================
-    // 1. ATUALIZA A ANIMAÇÃO (Timer)
-    // ===============================================
+    // ATUALIZA A ANIMAÇÃO
     obs->frame_timer += 1.0 / FPS; 
     if (obs->frame_timer >= obs->frame_delay) {
         obs->frame_timer = 0;
@@ -146,30 +137,27 @@ void obstacle_update(Obstacle *obs, Player *p, World *world) {
                 // LÓGICA DO SPIKE HEAD (Apenas inverte Y ou X)
                 else if (obs->type == SPIKE_HEAD_VERTICAL) {
                     // Se bateu em cima (Top Hit), desce com velocidade positiva
-                    if (obs->anim_row == 2) obs->vel_y = 6.0; // <--- Mude de 5.0 para 10.0
+                    if (obs->anim_row == 2) obs->vel_y = 6.0;
                     // Se bateu em baixo (Bottom Hit), sobe com velocidade negativa
-                    else obs->vel_y = -6.0;                   // <--- Mude de -5.0 para -10.0
+                    else obs->vel_y = -6.0;
                 }
 
-                // --- DEFINE A ANIMAÇÃO PADRÃO DE VOLTA ---
+                // DEFINE A ANIMAÇÃO PADRÃO DE VOLTA
                 if (obs->type == SAW_HORIZONTAL) {
-                    obs->anim_row = 0; // Serra usa linha 0
+                    obs->anim_row = 0;
                     obs->num_frames = 8;
                 } else {
-                    obs->anim_row = 1; // Outros usam Blink (linha 1)
+                    obs->anim_row = 1;
                     obs->num_frames = 4;
                 }
             }
         }
     }
 
-    // ===============================================
-    // 2. ATUALIZA O MOVIMENTO
-    // ===============================================
-    
+    // ATUALIZA O MOVIMENTO
     if (obs->state == OBS_STATE_MOVING) {
         
-        // --- LÓGICA DA SERRA (Segue o Trilho / Medo de Altura) ---
+        // LÓGICA DA SERRA
         if (obs->type == SAW_HORIZONTAL) {
             obs->x += obs->vel_x;
 
@@ -178,14 +166,14 @@ void obstacle_update(Obstacle *obs, Player *p, World *world) {
             int cy = obs->y + obs->height / 2;
             int tile_id = world_get_tile(world, cx, cy);
 
-            // Se tocar no AR (0), significa que o trilho acabou
+            // Se tocar no AR, significa que o trilho acabou
             if (tile_id == 0) {
                 obs->x -= obs->vel_x; // Desfaz o passo que saiu
                 obs->vel_x *= -1;     // Inverte a direção
             }
         }
         
-        // --- LÓGICA DO ROCK HEAD (Movimento Quadrado) ---
+        // LÓGICA DO ROCK HEAD
         else if (obs->type == ROCK_HEAD_RECTANGULAR) {
             obs->x += obs->vel_x;
             obs->y += obs->vel_y;
@@ -209,7 +197,7 @@ void obstacle_update(Obstacle *obs, Player *p, World *world) {
             }
         }
         
-        // --- LÓGICA DO SPIKE HEAD VERTICAL (Simples) ---
+        // LÓGICA DO SPIKE HEAD VERTICAL
         else if (obs->type == SPIKE_HEAD_VERTICAL) {
             obs->y += obs->vel_y;
             if (obs->vel_y > 0) { 
@@ -226,9 +214,7 @@ void obstacle_update(Obstacle *obs, Player *p, World *world) {
         }
     }
 
-    // ===============================================
     // 3. CHECA COLISÃO COM O JOGADOR
-    // ===============================================
     float ox1 = obs->x; float oy1 = obs->y;
     float ox2 = obs->x + obs->width; float oy2 = obs->y + obs->height;
     float px1 = p->x; float py1 = p->y;
@@ -293,11 +279,10 @@ void obstacle_update(Obstacle *obs, Player *p, World *world) {
 }
 
 void obstacle_draw(Obstacle *obs, World *world) {
-    
     float sw = obs->sprite_width;
     float sh = obs->sprite_height; 
 
-    // Eixo X: Centraliza horizontalmente (Padrão para todos)
+    // Eixo X: Centraliza horizontalmente
     float offset_x = (sw - obs->width) / 2.0;
 
     // Eixo Y: Lógica de Alinhamento

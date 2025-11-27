@@ -3,16 +3,15 @@
 
 #include <allegro5/allegro5.h>
 #include <allegro5/allegro_primitives.h>
-#include <stdbool.h> // Para usar 'bool'
+#include <stdbool.h>
 
 struct Player; 
 
-// --- Constantes do Mapa ---
+// Constantes do Mapa
 #define TILE_SIZE 16
 #define MAP_WIDTH 80
 #define MAP_HEIGHT 30
 
-// --- Estrutura do Mapa ---
 typedef struct {
     int* tiles;    
     int width;
@@ -22,19 +21,15 @@ typedef struct {
     float camera_y;
 
     ALLEGRO_BITMAP *bg_image;
-    ALLEGRO_BITMAP *tileset_sheet; // folha mestra
+    ALLEGRO_BITMAP *tileset_sheet;
 
     int tileset_cols; // largura da folha
 } World;
-
-
-// --- Protótipos das Funções ---
 
 World* world_create();
 
 void world_destroy(World* m);
 
-// Porque o "apelido" typedef "Player" não está visível aqui.
 void world_update(World *m, struct Player *p);
 
 void world_draw(World* m);
@@ -43,4 +38,4 @@ bool world_is_solid(World* m, int x, int y);
 
 int world_get_tile(World *m, int x, int y);
 
-#endif // WORLD_H
+#endif

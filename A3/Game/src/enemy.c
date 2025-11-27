@@ -2,7 +2,7 @@
 #include "game.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h> // Para abs() e fabs()
+#include <math.h>
 
 Enemy* enemy_create(EnemyType type, float x, float y) {
     Enemy *e = (Enemy*) malloc(sizeof(Enemy));
@@ -10,10 +10,9 @@ Enemy* enemy_create(EnemyType type, float x, float y) {
 
     e->x = x;
     e->y = y;
-    // --- NOVO: Salva a posição original ---
+    //Salva a posição original
     e->start_x = x; 
     e->start_y = y;
-    // --------------------------------------
 
     e->type = type;
     e->vel_x = 0;
@@ -25,7 +24,6 @@ Enemy* enemy_create(EnemyType type, float x, float y) {
     e->current_frame = 0;
     e->frame_timer = 0;
     
-    // --- CONFIGURAÇÃO DO RHINO ---
     if (type == ENEMY_RHINO) {
         e->spritesheet = al_load_bitmap("assets/Enemies/rhino_sheet.png");
         e->width = 42;
@@ -38,7 +36,6 @@ Enemy* enemy_create(EnemyType type, float x, float y) {
         e->num_frames = 11;
         e->frame_delay = 0.1;
     }
-    // --- CONFIGURAÇÃO DO BLUE BIRD ---
     else if (type == ENEMY_BLUEBIRD) {
         e->spritesheet = al_load_bitmap("assets/Enemies/bluebird_sheet.png");
         e->width = 24;
@@ -55,21 +52,20 @@ Enemy* enemy_create(EnemyType type, float x, float y) {
         e->num_frames = 9;   
         e->frame_delay = 0.08; 
     }
-    // --- CONFIGURAÇÃO DO COGUMELO ---
     else if (type == ENEMY_MUSHROOM) {
         e->spritesheet = al_load_bitmap("assets/Enemies/mushroom.png");
         
         e->width = 26;
-        e->height = 20; // Baixinho
+        e->height = 20;
         e->sprite_width = 32;
         e->sprite_height = 32;
 
         e->state = ENEMY_STATE_RUN;
-        e->vel_x = -1.5; // Começa andando para a esquerda devagar
+        e->vel_x = -1.5;
         e->vel_y = 0;
 
         e->anim_row = 0;     
-        e->num_frames = 14;  // Sua imagem tem 14 frames na linha
+        e->num_frames = 14;
         e->frame_delay = 0.1; 
     }
 
@@ -87,7 +83,6 @@ void enemy_destroy(Enemy *e) {
     }
 }
 
-// --- NOVO: Função de Reset ---
 void enemy_reset(Enemy *e) {
     // Restaura posição
     e->x = e->start_x;
@@ -121,14 +116,12 @@ void enemy_update(Enemy *e, Player *p, World *w) {
             e->state_timer -= 1.0 / FPS;
         } 
         else {
-            // Tempo acabou, renasce!
             enemy_reset(e); 
-            // O reset zera o state_timer, então o seno vai começar do 0 (suave)
             printf("Passaro respawnou!\n");
         }
-        return; // Sai da função, não processa o resto
+        return;
     }
-    // 1. ATUALIZA ANIMAÇÃO
+    // ATUALIZA ANIMAÇÃO
     e->frame_timer += 1.0 / FPS;
     if (e->frame_timer >= e->frame_delay) {
         e->frame_timer = 0;
@@ -147,10 +140,10 @@ void enemy_update(Enemy *e, Player *p, World *w) {
         }
     }
 
-    // 2. FÍSICA E MOVIMENTO
+    // FÍSICA E MOVIMENTO
     
-    // --- GRAVIDADE ---
-    // Aplica gravidade para Rhino e Cogumelo (Pássaro não)
+    // GRAVIDADE
+    // Aplica gravidade para Rhino e Cogumelo
     if (e->type != ENEMY_BLUEBIRD) {
         e->vel_y += 0.5; 
         e->y += e->vel_y;
@@ -164,9 +157,8 @@ void enemy_update(Enemy *e, Player *p, World *w) {
         }
     }
 
-    // --- RHINO AI ---
+    // RHINO AI
     if (e->type == ENEMY_RHINO) {
-        // (Sua lógica do Rhino mantida aqui...)
         if (e->state == ENEMY_STATE_IDLE) {
             e->vel_x = 0;
             if (e->state_timer > 0) { e->state_timer -= 1.0 / FPS; return; }
@@ -193,14 +185,14 @@ void enemy_update(Enemy *e, Player *p, World *w) {
         }
     }
 
-    // --- BLUE BIRD AI (Trampolim) ---
+    // BLUE BIRD AI (Trampolim)
     else if (e->type == ENEMY_BLUEBIRD && e->state != ENEMY_STATE_HIT_WALL) {
         // Voo senoidal (Sobe e Desce suavemente usando Start Y)
         e->state_timer += 1.0 / FPS;
         e->y = e->start_y + cos(e->state_timer * 5.0) * 10.0;
     }
 
-    // --- MUSHROOM AI (Patrulha Simples) ---
+    // MUSHROOM AI
     else if (e->type == ENEMY_MUSHROOM) {
         e->x += e->vel_x;
 
@@ -217,12 +209,11 @@ void enemy_update(Enemy *e, Player *p, World *w) {
         }
 
         // Define a direção do sprite
-        // No Pixel Adventure, geralmente Direita = Flip (-1) e Esquerda = Normal (1)
         if (e->vel_x > 0) e->facing_direction = -1;
         else e->facing_direction = 1;
     }
     
-    // 3. COLISÃO COM JOGADOR
+    // COLISÃO COM JOGADOR
     if (e->x <= -1000) return;
 
     float ex1 = e->x; float ey1 = e->y;
@@ -255,7 +246,7 @@ void enemy_draw(Enemy *e, World *w) {
     float sw = e->sprite_width;
     float sh = e->sprite_height; 
     
-    // Centraliza horizontalmente (Eixo X) - Igual para todos
+    // Centraliza horizontalmente (Eixo X)
     float offset_x = (sw - e->width) / 2.0;
 
     // Eixo Y: Decide com base no tipo
