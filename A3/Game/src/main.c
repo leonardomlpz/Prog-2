@@ -94,6 +94,7 @@ int main()
     Obstacle *saw = obstacle_create(SAW_HORIZONTAL, 890, 292);
     Enemy *rhino = enemy_create(ENEMY_RHINO, 400, 400);
     Enemy *bird = enemy_create(ENEMY_BLUEBIRD, 992, 208);
+    Enemy *mushroom = enemy_create(ENEMY_MUSHROOM, 208, 240);
     Obstacle *trophy = obstacle_create(GOAL_TROPHY, 768,352);
     
     // Começa descendo
@@ -155,6 +156,7 @@ int main()
                     obstacle_update(trophy, player, world);
                     enemy_update(rhino, player, world);
                     enemy_update(bird, player, world);
+                    enemy_update(mushroom, player, world);
 
                     if (player->hp <= 0)
                         change_state(STATE_GAME_OVER_LOSE);
@@ -191,6 +193,11 @@ int main()
                     // 2. Botão REINICIAR (Y=350)
                     if (mx >= btn_x && mx <= btn_x + btn_size && my >= 350 && my <= 350 + btn_size) {
                         player_reset(player);
+
+                        enemy_reset(rhino);
+                        enemy_reset(bird);
+                        enemy_reset(mushroom);
+
                         pop_state(); // Despausa o jogo já resetado
                     }
 
@@ -218,6 +225,9 @@ int main()
                         my >= 300 && my <= 300 + btn_size) {
                         
                         player_reset(player); // Reseta vida e posição
+                        enemy_reset(rhino);
+                        enemy_reset(bird);
+                        enemy_reset(mushroom);
                         
                         // Reseta pilha de estados para voltar ao jogo limpo
                         stack_top = -1; 
@@ -274,6 +284,7 @@ int main()
 
                     enemy_draw(rhino, world);
                     enemy_draw(bird, world);
+                    enemy_draw(mushroom, world);
 
                     player_draw(player, world);
 
@@ -435,6 +446,7 @@ int main()
     obstacle_destroy(trophy);
     enemy_destroy(rhino);
     enemy_destroy(bird);
+    enemy_destroy(mushroom);
     al_destroy_event_queue(queue);
     al_destroy_display(disp);
 

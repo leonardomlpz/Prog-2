@@ -27,6 +27,7 @@ typedef struct Player{
     bool move_left;
     bool move_right;
     bool jump_pressed;
+    bool crouch_pressed;
     bool level_complete;
 
     ALLEGRO_BITMAP *spritesheet; // folha de sprites

@@ -19,9 +19,10 @@ typedef enum {
 
 typedef struct {
     float x, y;
+    float start_x, start_y;     // Respawn
     float vel_x, vel_y;
-    int width, height;          // Hitbox física
-    int sprite_width, sprite_height; // Tamanho do desenho
+    int width, height;
+    int sprite_width, sprite_height;
     int facing_direction;       // 1 = Direita, -1 = Esquerda
 
     EnemyType type;
@@ -48,5 +49,7 @@ void enemy_destroy(Enemy *e);
 void enemy_update(Enemy *e, Player *p, World *w);
 
 void enemy_draw(Enemy *e, World *w);
+
+void enemy_reset(Enemy *e);
 
 #endif

@@ -259,6 +259,25 @@ void obstacle_update(Obstacle *obs, Player *p, World *world) {
                     p->on_ground = true; 
                     p->x += obs->vel_x;
                     
+                    if (obs->vel_x > 0) { // Movendo para Direita
+                        // Verifica colisão no lado direito do jogador
+                        if (world_is_solid(world, p->x + p->width, p->y) ||
+                            world_is_solid(world, p->x + p->width, p->y + p->height - 1)) {
+                            
+                            // Bateu na parede: Empurra de volta para a esquerda (alinha com a parede)
+                            p->x = (int)(p->x + p->width) / TILE_SIZE * TILE_SIZE - p->width;
+                        }
+                    }
+                    else if (obs->vel_x < 0) { // Movendo para Esquerda
+                        // Verifica colisão no lado esquerdo do jogador
+                        if (world_is_solid(world, p->x, p->y) ||
+                            world_is_solid(world, p->x, p->y + p->height - 1)) {
+                            
+                            // Bateu na parede: Empurra de volta para a direita
+                            p->x = ((int)p->x / TILE_SIZE + 1) * TILE_SIZE;
+                        }
+                    }
+
                     if (p->anim_row == 3) { // Reseta animação de queda
                         p->state = IDLE; p->anim_row = 0; p->num_frames = 11;
                         p->current_frame = 0; p->frame_delay = 0.1;
@@ -273,22 +292,32 @@ void obstacle_update(Obstacle *obs, Player *p, World *world) {
     }
 }
 
-// --- Desenhar Obstáculo ---
 void obstacle_draw(Obstacle *obs, World *world) {
     
-    // Usa as variáveis que guardamos na struct!
     float sw = obs->sprite_width;
     float sh = obs->sprite_height; 
 
-    // Cálculo de Offset (Centraliza a hitbox no sprite)
+    // Eixo X: Centraliza horizontalmente (Padrão para todos)
     float offset_x = (sw - obs->width) / 2.0;
-    float offset_y = (sh - obs->height) / 2.0;
+
+    // Eixo Y: Lógica de Alinhamento
+    float offset_y = 0;
+
+    if (obs->type == GOAL_TROPHY) {
+        // TROFÉU: Alinha pela BASE (Pés)
+        // Joga toda a diferença de altura para cima
+        offset_y = sh - obs->height; 
+    } 
+    else {
+        // SERRAS / ROCK HEADS / SPIKES: Centraliza
+        offset_y = (sh - obs->height) / 2.0;
+    }
     
-    // Posição do RECORTE
+    // Posição do Recorte na Imagem
     float sx = obs->current_frame * sw; 
     float sy = obs->anim_row * sh; 
 
-    // Posição do DESENHO
+    // Posição na Tela
     float dx = (obs->x - world->camera_x) - offset_x;
     float dy = (obs->y - world->camera_y) - offset_y;
 
@@ -302,8 +331,12 @@ void obstacle_draw(Obstacle *obs, World *world) {
         );
     }
     
-    // Debug Hitbox (se quiser ver o quadrado verde)
-    al_draw_rectangle(obs->x - world->camera_x, obs->y - world->camera_y, 
-                      obs->x + obs->width - world->camera_x, obs->y + obs->height - world->camera_y, 
-                      al_map_rgb(0, 255, 0), 1);
+    // Debug Hitbox
+    al_draw_rectangle(
+        obs->x - world->camera_x, 
+        obs->y - world->camera_y, 
+        obs->x + obs->width - world->camera_x, 
+        obs->y + obs->height - world->camera_y, 
+        al_map_rgb(255, 0, 0), 1
+    );
 }
