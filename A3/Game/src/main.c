@@ -137,6 +137,7 @@ int main()
                     if (event.keyboard.keycode == ALLEGRO_KEY_P || 
                         event.keyboard.keycode == ALLEGRO_KEY_ESCAPE) {
                         push_state(STATE_PAUSE);
+                        menu->selected_option = 0; // Reseta selecao ao pausar
                     }
                 }
 
@@ -152,94 +153,197 @@ int main()
                     enemy_update(bird, player, world);
                     enemy_update(mushroom, player, world);
 
-                    if (player->hp <= 0)
+                    if (player->hp <= 0) {
                         change_state(STATE_GAME_OVER_LOSE);
-                    else if (player->level_complete)
+                        menu->selected_option = 0; // Reseta selecao
+                    }
+                    else if (player->level_complete) {
                         change_state(STATE_GAME_OVER_WIN);
+                        menu->selected_option = 0; // Reseta selecao
+                    }
 
                     redraw = true;
                 }
                 break;
 
             case STATE_PAUSE:
-                // Tecla P ou ESC para despausar
-                if (event.type == ALLEGRO_EVENT_KEY_DOWN) {
-                    if (event.keyboard.keycode == ALLEGRO_KEY_P || 
-                        event.keyboard.keycode == ALLEGRO_KEY_ESCAPE) {
-                        pop_state(); 
+                {
+                    float p_scale = 4.0;
+                    int btn_w = al_get_bitmap_width(menu->btn_play);
+                    int btn_h = al_get_bitmap_height(menu->btn_play);
+                    int btn_x = (SCREEN_WIDTH / 2) - ((btn_w * p_scale) / 2);
+
+                    // --- TECLADO PAUSE ---
+                    if (event.type == ALLEGRO_EVENT_KEY_DOWN) {
+                        // Navegação
+                        if (event.keyboard.keycode == ALLEGRO_KEY_W || event.keyboard.keycode == ALLEGRO_KEY_UP) {
+                            menu->selected_option--;
+                            if (menu->selected_option < 0) menu->selected_option = 2;
+                        }
+                        if (event.keyboard.keycode == ALLEGRO_KEY_S || event.keyboard.keycode == ALLEGRO_KEY_DOWN) {
+                            menu->selected_option++;
+                            if (menu->selected_option > 2) menu->selected_option = 0;
+                        }
+                        // Ação (Enter)
+                        if (event.keyboard.keycode == ALLEGRO_KEY_ENTER || event.keyboard.keycode == ALLEGRO_KEY_SPACE) {
+                            if (menu->selected_option == 0) { // Continuar
+                                pop_state();
+                            } else if (menu->selected_option == 1) { // Reiniciar
+                                player_reset(player);
+                                enemy_reset(rhino);
+                                enemy_reset(bird);
+                                enemy_reset(mushroom);
+                                pop_state();
+                            } else if (menu->selected_option == 2) { // Menu
+                                player_reset(player);
+                                stack_top = -1;
+                                push_state(STATE_MENU);
+                            }
+                        }
+                        // Tecla P ou ESC para despausar (atalho rápido)
+                        if (event.keyboard.keycode == ALLEGRO_KEY_P || event.keyboard.keycode == ALLEGRO_KEY_ESCAPE) {
+                            pop_state(); 
+                        }
                     }
-                }
-                
-                // CLIQUE DO MOUSE
-                if (event.type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN) {
-                    int mx = event.mouse.x;
-                    int my = event.mouse.y;
+
+                    // MOUSE PAUSE
+                    if (event.type == ALLEGRO_EVENT_MOUSE_AXES) {
+                        int mx = event.mouse.x;
+                        int my = event.mouse.y;
+
+                        // Botão 0: Continuar
+                        if (mx >= btn_x && mx <= btn_x + (btn_w * p_scale) && my >= 250 && my <= 250 + (btn_h * p_scale)) {
+                            menu->selected_option = 0;
+                        }
+                        // Botão 1: Reiniciar
+                        else if (mx >= btn_x && mx <= btn_x + (btn_w * p_scale) && my >= 350 && my <= 350 + (btn_h * p_scale)) {
+                            menu->selected_option = 1;
+                        }
+                        // Botão 2: Menu
+                        else if (mx >= btn_x && mx <= btn_x + (btn_w * p_scale) && my >= 450 && my <= 450 + (btn_h * p_scale)) {
+                            menu->selected_option = 2;
+                        }
+                    }
+
+                    // MOUSE PAUSE (CLIQUE)
+                    if (event.type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN) {
+                        if (event.mouse.button == 1) {
+                            // Executa a opção que está selecionada (se o mouse estiver em cima, o hover já selecionou)
+                            int mx = event.mouse.x;
+                            int my = event.mouse.y;
+                            
+                            // Verifica se clicou na area valida de algum botao
+                            bool clicked = false;
+                            if (mx >= btn_x && mx <= btn_x + (btn_w * p_scale)) {
+                                if (my >= 250 && my <= 250 + (btn_h * p_scale)) clicked = true;
+                                if (my >= 350 && my <= 350 + (btn_h * p_scale)) clicked = true;
+                                if (my >= 450 && my <= 450 + (btn_h * p_scale)) clicked = true;
+                            }
+
+                            if (clicked) {
+                                if (menu->selected_option == 0) { // Continuar
+                                    pop_state();
+                                } else if (menu->selected_option == 1) { // Reiniciar
+                                    player_reset(player);
+                                    enemy_reset(rhino);
+                                    enemy_reset(bird);
+                                    enemy_reset(mushroom);
+                                    pop_state();
+                                } else if (menu->selected_option == 2) { // Menu
+                                    player_reset(player);
+                                    stack_top = -1;
+                                    push_state(STATE_MENU);
+                                }
+                            }
+                        }
+                    }
                     
-                    int btn_size = 84; 
-                    int btn_x = (SCREEN_WIDTH / 2) - (btn_size / 2);
-
-                    // Botão CONTINUAR
-                    if (mx >= btn_x && mx <= btn_x + btn_size && my >= 250 && my <= 250 + btn_size) {
-                        pop_state(); // Despausa
-                    }
-
-                    // Botão REINICIAR
-                    if (mx >= btn_x && mx <= btn_x + btn_size && my >= 350 && my <= 350 + btn_size) {
-                        player_reset(player);
-
-                        enemy_reset(rhino);
-                        enemy_reset(bird);
-                        enemy_reset(mushroom);
-
-                        pop_state(); // Despausa o jogo já resetado
-                    }
-
-                    // Botão SAIR/MENU
-                    if (mx >= btn_x && mx <= btn_x + btn_size && my >= 450 && my <= 450 + btn_size) {
-                        player_reset(player);
-                        stack_top = -1;      // Limpa a pilha
-                        push_state(STATE_MENU); // Vai pro Menu
-                    }
+                    if(event.type == ALLEGRO_EVENT_TIMER) redraw = true;
                 }
-                
-                if(event.type == ALLEGRO_EVENT_TIMER) redraw = true;
                 break;
 
             case STATE_GAME_OVER_WIN:
             case STATE_GAME_OVER_LOSE:
-                if (event.type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN) {
-                    int mx = event.mouse.x;
-                    int my = event.mouse.y;
-                    int btn_size = 21 * 4;
-                    int btn_x_center = (SCREEN_WIDTH / 2) - (btn_size / 2);
+                {
+                    float scale = 4.0;
+                    int btn_w = al_get_bitmap_width(menu->btn_restart); // Restart e Back tem mesmo tamanho geralmente
+                    int btn_h = al_get_bitmap_height(menu->btn_restart);
+                    int btn_x_center = (SCREEN_WIDTH / 2) - ((btn_w * scale) / 2);
 
-                    // Clique no RESTART
-                    if (mx >= btn_x_center && mx <= btn_x_center + btn_size &&
-                        my >= 300 && my <= 300 + btn_size) {
-                        
-                        player_reset(player); // Reseta vida e posição
-                        enemy_reset(rhino);
-                        enemy_reset(bird);
-                        enemy_reset(mushroom);
-                        
-                        // Reseta pilha de estados para voltar ao jogo limpo
-                        stack_top = -1; 
-                        push_state(STATE_GAMEPLAY);
+                    // TECLADO GAME OVER
+                    if (event.type == ALLEGRO_EVENT_KEY_DOWN) {
+                        // Navegação
+                        if (event.keyboard.keycode == ALLEGRO_KEY_W || event.keyboard.keycode == ALLEGRO_KEY_UP) {
+                            menu->selected_option--;
+                            if (menu->selected_option < 0) menu->selected_option = 1;
+                        }
+                        if (event.keyboard.keycode == ALLEGRO_KEY_S || event.keyboard.keycode == ALLEGRO_KEY_DOWN) {
+                            menu->selected_option++;
+                            if (menu->selected_option > 1) menu->selected_option = 0;
+                        }
+                        // Ação
+                        if (event.keyboard.keycode == ALLEGRO_KEY_ENTER || event.keyboard.keycode == ALLEGRO_KEY_SPACE) {
+                            if (menu->selected_option == 0) { // Restart
+                                player_reset(player);
+                                enemy_reset(rhino);
+                                enemy_reset(bird);
+                                enemy_reset(mushroom);
+                                stack_top = -1; 
+                                push_state(STATE_GAMEPLAY);
+                            } else if (menu->selected_option == 1) { // Back/Menu
+                                player_reset(player);
+                                stack_top = -1;
+                                push_state(STATE_MENU);
+                            }
+                        }
                     }
 
-                    // Clique no BACK
-                    if (mx >= btn_x_center && mx <= btn_x_center + btn_size &&
-                        my >= 450 && my <= 450 + btn_size) {
-                        
-                        player_reset(player);
-                        
-                        // Volta para o Menu
-                        stack_top = -1;
-                        push_state(STATE_MENU);
+                    // MOUSE GAME OVER
+                    if (event.type == ALLEGRO_EVENT_MOUSE_AXES) {
+                        int mx = event.mouse.x;
+                        int my = event.mouse.y;
+
+                        // Botão 0: Restart
+                        if (mx >= btn_x_center && mx <= btn_x_center + (btn_w * scale) && my >= 300 && my <= 300 + (btn_h * scale)) {
+                            menu->selected_option = 0;
+                        }
+                        // Botão 1: Back
+                        else if (mx >= btn_x_center && mx <= btn_x_center + (btn_w * scale) && my >= 450 && my <= 450 + (btn_h * scale)) {
+                            menu->selected_option = 1;
+                        }
                     }
+
+                    // MOUSE GAME OVER (CLIQUE)
+                    if (event.type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN) {
+                         if (event.mouse.button == 1) {
+                            int mx = event.mouse.x;
+                            int my = event.mouse.y;
+                            bool clicked = false;
+
+                            if (mx >= btn_x_center && mx <= btn_x_center + (btn_w * scale)) {
+                                if (my >= 300 && my <= 300 + (btn_h * scale)) clicked = true;
+                                if (my >= 450 && my <= 450 + (btn_h * scale)) clicked = true;
+                            }
+
+                            if (clicked) {
+                                if (menu->selected_option == 0) { // Restart
+                                    player_reset(player);
+                                    enemy_reset(rhino);
+                                    enemy_reset(bird);
+                                    enemy_reset(mushroom);
+                                    stack_top = -1; 
+                                    push_state(STATE_GAMEPLAY);
+                                } else if (menu->selected_option == 1) { // Back
+                                    player_reset(player);
+                                    stack_top = -1;
+                                    push_state(STATE_MENU);
+                                }
+                            }
+                         }
+                    }
+                    
+                    if(event.type == ALLEGRO_EVENT_TIMER) redraw = true;
                 }
-                
-                if(event.type == ALLEGRO_EVENT_TIMER) redraw = true;
                 break;
         }
 
@@ -337,11 +441,17 @@ int main()
                     // DESENHO DOS BOTÕES
                     float p_scale = 4.0;
                     
+                    // Cores de Seleção
+                    ALLEGRO_COLOR c_sel = al_map_rgb(255, 255, 255); // Brilhante
+                    ALLEGRO_COLOR c_unsel = al_map_rgb(100, 100, 100); // Escuro
+
                     // Botão CONTINUAR (Usando o Play)
                     if (menu->btn_play) {
                         int w = al_get_bitmap_width(menu->btn_play);
                         int h = al_get_bitmap_height(menu->btn_play);
-                        al_draw_scaled_bitmap(menu->btn_play, 0, 0, w, h,
+                        al_draw_tinted_scaled_bitmap(menu->btn_play, 
+                            (menu->selected_option == 0) ? c_sel : c_unsel,
+                            0, 0, w, h,
                             (SCREEN_WIDTH/2) - (w*p_scale)/2, 250,
                             w*p_scale, h*p_scale, 0);
                     }
@@ -350,7 +460,9 @@ int main()
                     if (menu->btn_restart) {
                         int w = al_get_bitmap_width(menu->btn_restart);
                         int h = al_get_bitmap_height(menu->btn_restart);
-                        al_draw_scaled_bitmap(menu->btn_restart, 0, 0, w, h,
+                        al_draw_tinted_scaled_bitmap(menu->btn_restart, 
+                            (menu->selected_option == 1) ? c_sel : c_unsel,
+                            0, 0, w, h,
                             (SCREEN_WIDTH/2) - (w*p_scale)/2, 350,
                             w*p_scale, h*p_scale, 0);
                     }
@@ -359,7 +471,9 @@ int main()
                     if (menu->btn_back) {
                         int w = al_get_bitmap_width(menu->btn_back);
                         int h = al_get_bitmap_height(menu->btn_back);
-                        al_draw_scaled_bitmap(menu->btn_back, 0, 0, w, h,
+                        al_draw_tinted_scaled_bitmap(menu->btn_back, 
+                            (menu->selected_option == 2) ? c_sel : c_unsel,
+                            0, 0, w, h,
                             (SCREEN_WIDTH/2) - (w*p_scale)/2, 450,
                             w*p_scale, h*p_scale, 0);
                     }
@@ -388,7 +502,7 @@ int main()
                     // Título
                     if (current_state == STATE_GAME_OVER_WIN) {
                         al_draw_text(menu->font, al_map_rgb(255, 255, 0), 
-                            SCREEN_WIDTH/2, 150, ALLEGRO_ALIGN_CENTER, "F A S E  C O M P L E T A !");
+                            SCREEN_WIDTH/2, 150, ALLEGRO_ALIGN_CENTER, "F A S E   C O M P L E T A !");
                     } else {
                         al_draw_text(menu->font, al_map_rgb(255, 0, 0), 
                             SCREEN_WIDTH/2, 150, ALLEGRO_ALIGN_CENTER, "G A M E  O V E R");
@@ -396,22 +510,28 @@ int main()
 
                     // Botões (Centralizados)
                     float scale = 4.0;
+                    
+                    // Cores de Seleção
+                    ALLEGRO_COLOR c_sel_go = al_map_rgb(255, 255, 255); // Brilhante
+                    ALLEGRO_COLOR c_unsel_go = al_map_rgb(100, 100, 100); // Escuro
 
-                    // RESTART
+                    // RESTART (Opção 0)
                     if (menu->btn_restart) {
                         int w = al_get_bitmap_width(menu->btn_restart);
                         int h = al_get_bitmap_height(menu->btn_restart);
-                        al_draw_scaled_bitmap(menu->btn_restart, 
+                        al_draw_tinted_scaled_bitmap(menu->btn_restart, 
+                            (menu->selected_option == 0) ? c_sel_go : c_unsel_go,
                             0, 0, w, h,
                             (SCREEN_WIDTH/2) - (w*scale)/2, 300, // X, Y
                             w*scale, h*scale, 0);
                     }
 
-                    // BACK/MENU (Um pouco abaixo)
+                    // BACK/MENU (Opção 1)
                     if (menu->btn_back) {
                         int w = al_get_bitmap_width(menu->btn_back);
                         int h = al_get_bitmap_height(menu->btn_back);
-                        al_draw_scaled_bitmap(menu->btn_back, 
+                        al_draw_tinted_scaled_bitmap(menu->btn_back, 
+                            (menu->selected_option == 1) ? c_sel_go : c_unsel_go,
                             0, 0, w, h,
                             (SCREEN_WIDTH/2) - (w*scale)/2, 450, // X, Y
                             w*scale, h*scale, 0);

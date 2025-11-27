@@ -87,7 +87,7 @@ void menu_handle_event(Menu* m, ALLEGRO_EVENT* event, GameState* state, bool* do
         }
     }
     
-    // 2. MOUSE
+    // MOUSE
     else if (event->type == ALLEGRO_EVENT_MOUSE_AXES) {
         int mx = event->mouse.x;
         int my = event->mouse.y;
@@ -133,35 +133,46 @@ void menu_draw(Menu* m) {
     al_draw_text(m->font, al_map_rgb(255, 255, 255), 
                  SCREEN_WIDTH/2, 100, ALLEGRO_ALIGN_CENTER, "NINJA FROG ADVENTURE");
 
-    // Configuração dos Botões
-    float scale = 5.0; // Botões grandes 
-    int w = al_get_bitmap_width(m->btn_play);
-    int h = al_get_bitmap_height(m->btn_play);
-    
-    float cx = SCREEN_WIDTH / 2 - (w * scale) / 2;
-    float cy = 300;
+    // Configuração Geral
+    float scale = 5.0; 
+    float start_y = 300;
     
     // Cores de Seleção
-    ALLEGRO_COLOR c_sel = al_map_rgb(255, 255, 255); // Normal (Brilhante)
-    ALLEGRO_COLOR c_unsel = al_map_rgb(100, 100, 100); // Escuro
+    ALLEGRO_COLOR c_sel = al_map_rgb(255, 255, 255); 
+    ALLEGRO_COLOR c_unsel = al_map_rgb(100, 100, 100); 
 
-    // Botão PLAY (Opção 0)
+    // Botão PLAY
+    int w_play = al_get_bitmap_width(m->btn_play);
+    int h_play = al_get_bitmap_height(m->btn_play);
+    
+    // Calcula o X centralizado para o tamanho do PLAY
+    float cx_play = (SCREEN_WIDTH / 2) - ((w_play * scale) / 2);
+
     al_draw_tinted_scaled_bitmap(
         m->btn_play,
         (m->selected_option == 0) ? c_sel : c_unsel,
-        0, 0, w, h,
-        cx, cy,
-        w * scale, h * scale,
+        0, 0, w_play, h_play,
+        cx_play, start_y,
+        w_play * scale, h_play * scale,
         0
     );
 
-    // Botão CLOSE (Opção 1)
+    // Botão CLOSE
+    int w_close = al_get_bitmap_width(m->btn_close);
+    int h_close = al_get_bitmap_height(m->btn_close);
+
+    // Calcula o X centralizado para o tamanho do CLOSE (Essa é a correção!)
+    float cx_close = (SCREEN_WIDTH / 2) - ((w_close * scale) / 2);
+    
+    // Calcula o Y logo abaixo do Play
+    float cy_close = start_y + (h_play * scale) + 20;
+
     al_draw_tinted_scaled_bitmap(
         m->btn_close,
         (m->selected_option == 1) ? c_sel : c_unsel,
-        0, 0, w, h,
-        cx, cy + (h * scale) + 20,
-        w * scale, h * scale,
+        0, 0, w_close, h_close,
+        cx_close, cy_close,
+        w_close * scale, h_close * scale,
         0
     );
 }
