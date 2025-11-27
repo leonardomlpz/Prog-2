@@ -7,7 +7,8 @@
 
 typedef enum {
     ENEMY_RHINO,
-    ENEMY_MUSHROOM
+    ENEMY_MUSHROOM,
+    ENEMY_BLUEBIRD
 } EnemyType;
 
 typedef enum {

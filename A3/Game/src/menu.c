@@ -50,34 +50,80 @@ void menu_destroy(Menu* m) {
     }
 }
 
-// --- Tratar Eventos (Input) ---
+// --- Tratar Eventos (Input: Teclado e Mouse) ---
 void menu_handle_event(Menu* m, ALLEGRO_EVENT* event, GameState* state, bool* done) {
+    
+    // Configuração igual à do draw para calcular colisão
+    float scale = 5.0;
+    int w_play = al_get_bitmap_width(m->btn_play);
+    int h_play = al_get_bitmap_height(m->btn_play);
+    int w_close = al_get_bitmap_width(m->btn_close);
+    int h_close = al_get_bitmap_height(m->btn_close);
+
+    // Posições (Devem bater com o menu_draw)
+    float x_play = (SCREEN_WIDTH / 2) - ((w_play * scale) / 2);
+    float y_play = 300; // Posição Y fixa definida no draw
+
+    float x_close = (SCREEN_WIDTH / 2) - ((w_close * scale) / 2);
+    float y_close = y_play + (h_play * scale) + 20;
+
+    // --- 1. TECLADO ---
     if (event->type == ALLEGRO_EVENT_KEY_DOWN) {
         switch (event->keyboard.keycode) {
-            case ALLEGRO_KEY_W: // Mover para cima
+            case ALLEGRO_KEY_W: 
             case ALLEGRO_KEY_UP:
                 m->selected_option--;
-                if (m->selected_option < 0) {
-                    m->selected_option = 1; // Volta para "Sair"
-                }
+                if (m->selected_option < 0) m->selected_option = 1;
                 break;
             
-            case ALLEGRO_KEY_S: // Mover para baixo
+            case ALLEGRO_KEY_S: 
             case ALLEGRO_KEY_DOWN:
                 m->selected_option++;
-                if (m->selected_option > 1) {
-                    m->selected_option = 0; // Volta para "Iniciar"
-                }
+                if (m->selected_option > 1) m->selected_option = 0;
                 break;
 
             case ALLEGRO_KEY_ENTER:
             case ALLEGRO_KEY_SPACE:
-                if (m->selected_option == 0) { // "Iniciar"
-                    *state = STATE_GAMEPLAY;
-                } else if (m->selected_option == 1) { // "Sair"
-                    *done = true;
-                }
+                if (m->selected_option == 0) *state = STATE_GAMEPLAY;
+                else if (m->selected_option == 1) *done = true;
                 break;
+        }
+    }
+    
+    // --- 2. MOUSE (Movimento - Hover) ---
+    else if (event->type == ALLEGRO_EVENT_MOUSE_AXES) {
+        int mx = event->mouse.x;
+        int my = event->mouse.y;
+
+        // Checa se mouse está sobre o botão Play
+        if (mx >= x_play && mx <= x_play + (w_play * scale) &&
+            my >= y_play && my <= y_play + (h_play * scale)) {
+            m->selected_option = 0;
+        }
+        // Checa se mouse está sobre o botão Close
+        else if (mx >= x_close && mx <= x_close + (w_close * scale) &&
+                 my >= y_close && my <= y_close + (h_close * scale)) {
+            m->selected_option = 1;
+        }
+    }
+
+    // --- 3. MOUSE (Clique) ---
+    else if (event->type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN) {
+        if (event->mouse.button == 1) { // Botão esquerdo
+            // Apenas confirma a opção que já foi selecionada pelo Hover
+            int mx = event->mouse.x;
+            int my = event->mouse.y;
+
+            // Verifica clique no Play
+            if (mx >= x_play && mx <= x_play + (w_play * scale) &&
+                my >= y_play && my <= y_play + (h_play * scale)) {
+                *state = STATE_GAMEPLAY;
+            }
+            // Verifica clique no Close
+            else if (mx >= x_close && mx <= x_close + (w_close * scale) &&
+                     my >= y_close && my <= y_close + (h_close * scale)) {
+                *done = true;
+            }
         }
     }
 }

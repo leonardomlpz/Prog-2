@@ -93,6 +93,7 @@ int main()
     Obstacle *rock_head_2 = obstacle_create(ROCK_HEAD_RECTANGULAR, 672, 416);
     Obstacle *saw = obstacle_create(SAW_HORIZONTAL, 890, 292);
     Enemy *rhino = enemy_create(ENEMY_RHINO, 400, 400);
+    Enemy *bird = enemy_create(ENEMY_BLUEBIRD, 992, 208);
     Obstacle *trophy = obstacle_create(GOAL_TROPHY, 768,352);
     
     // Começa descendo
@@ -153,6 +154,7 @@ int main()
                     obstacle_update(saw, player, world);
                     obstacle_update(trophy, player, world);
                     enemy_update(rhino, player, world);
+                    enemy_update(bird, player, world);
 
                     if (player->hp <= 0)
                         change_state(STATE_GAME_OVER_LOSE);
@@ -164,20 +166,44 @@ int main()
                 break;
 
             case STATE_PAUSE:
-                    if (event.type == ALLEGRO_EVENT_KEY_DOWN) {
-                        if (event.keyboard.keycode == ALLEGRO_KEY_P || 
-                            event.keyboard.keycode == ALLEGRO_KEY_ESCAPE) {
-                            pop_state(); // Volta para o jogo
-                        }
+                // Tecla P ou ESC para despausar
+                if (event.type == ALLEGRO_EVENT_KEY_DOWN) {
+                    if (event.keyboard.keycode == ALLEGRO_KEY_P || 
+                        event.keyboard.keycode == ALLEGRO_KEY_ESCAPE) {
+                        pop_state(); 
                     }
-                    // Se clicar com o mouse, também volta
-                    if (event.type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN) {
-                        pop_state();
-                    }
-                    if(event.type == ALLEGRO_EVENT_TIMER)
-                        redraw = true;
+                }
+                
+                // CLIQUE DO MOUSE
+                if (event.type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN) {
+                    int mx = event.mouse.x;
+                    int my = event.mouse.y;
+                    
+                    // Tamanho aproximado dos botões (21px * 4.0 scale = 84px)
+                    int btn_size = 84; 
+                    int btn_x = (SCREEN_WIDTH / 2) - (btn_size / 2);
 
-                    break;
+                    // 1. Botão CONTINUAR (Y=250)
+                    if (mx >= btn_x && mx <= btn_x + btn_size && my >= 250 && my <= 250 + btn_size) {
+                        pop_state(); // Despausa
+                    }
+
+                    // 2. Botão REINICIAR (Y=350)
+                    if (mx >= btn_x && mx <= btn_x + btn_size && my >= 350 && my <= 350 + btn_size) {
+                        player_reset(player);
+                        pop_state(); // Despausa o jogo já resetado
+                    }
+
+                    // 3. Botão SAIR/MENU (Y=450)
+                    if (mx >= btn_x && mx <= btn_x + btn_size && my >= 450 && my <= 450 + btn_size) {
+                        player_reset(player);
+                        stack_top = -1;      // Limpa a pilha
+                        push_state(STATE_MENU); // Vai pro Menu
+                    }
+                }
+                
+                if(event.type == ALLEGRO_EVENT_TIMER) redraw = true;
+                break;
 
             case STATE_GAME_OVER_WIN:
             case STATE_GAME_OVER_LOSE:
@@ -247,6 +273,7 @@ int main()
                     obstacle_draw(trophy, world);
 
                     enemy_draw(rhino, world);
+                    enemy_draw(bird, world);
 
                     player_draw(player, world);
 
@@ -279,25 +306,61 @@ int main()
                     break;
 
                 case STATE_PAUSE:
-                    world_draw(world);
-                    player_draw(player, world);
+                    // 1. ZONA DO ZOOM (Desenha o jogo congelado no fundo)
+                    {
+                        ALLEGRO_TRANSFORM transform;
+                        al_identity_transform(&transform);
+                        al_scale_transform(&transform, GAME_SCALE, GAME_SCALE);
+                        al_use_transform(&transform);
+                        
+                        world_draw(world);
+                        player_draw(player, world);
+                        obstacle_draw(spike_head, world);
+                        // ... desenhe outros inimigos aqui se tiver ...
+                    }
 
-                    // 2. Desenha a sobreposição (Overlay)
+                    // 2. ZONA SEM ZOOM (Interface e Botões)
+                    al_use_transform(&t); // Reseta para 1:1 (Tela cheia 800x600)
+
+                    // Tela Escura
                     al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
-                    
-                    // Retângulo do tamanho exato da tela
-                    al_draw_filled_rectangle(0, 0, 
-                            SCREEN_WIDTH, 
-                            SCREEN_HEIGHT, 
-                            al_map_rgba_f(0, 0, 0, 0.5));
-                    
-                    // Texto centralizado na tela real
-                    al_draw_text(menu->font, al_map_rgb(255, 255, 255), 
-                                 SCREEN_WIDTH / 2, 
-                                 SCREEN_HEIGHT / 2 - 20, 
-                                 ALLEGRO_ALIGN_CENTER, "PAUSADO");
-                    
+                    al_draw_filled_rectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, al_map_rgba_f(0, 0, 0, 0.6));
                     al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_INVERSE_ALPHA);
+
+                    // Título "PAUSADO"
+                    al_draw_text(menu->font, al_map_rgb(255, 255, 255), 
+                                 SCREEN_WIDTH / 2, 100, 
+                                 ALLEGRO_ALIGN_CENTER, "PAUSADO");
+
+                    // --- DESENHO DOS BOTÕES ---
+                    float p_scale = 4.0;
+                    
+                    // Botão CONTINUAR (Usando o Play)
+                    if (menu->btn_play) {
+                        int w = al_get_bitmap_width(menu->btn_play);
+                        int h = al_get_bitmap_height(menu->btn_play);
+                        al_draw_scaled_bitmap(menu->btn_play, 0, 0, w, h,
+                            (SCREEN_WIDTH/2) - (w*p_scale)/2, 250, // Y = 250
+                            w*p_scale, h*p_scale, 0);
+                    }
+
+                    // Botão REINICIAR
+                    if (menu->btn_restart) {
+                        int w = al_get_bitmap_width(menu->btn_restart);
+                        int h = al_get_bitmap_height(menu->btn_restart);
+                        al_draw_scaled_bitmap(menu->btn_restart, 0, 0, w, h,
+                            (SCREEN_WIDTH/2) - (w*p_scale)/2, 350, // Y = 350
+                            w*p_scale, h*p_scale, 0);
+                    }
+
+                    // Botão VOLTAR AO MENU
+                    if (menu->btn_back) {
+                        int w = al_get_bitmap_width(menu->btn_back);
+                        int h = al_get_bitmap_height(menu->btn_back);
+                        al_draw_scaled_bitmap(menu->btn_back, 0, 0, w, h,
+                            (SCREEN_WIDTH/2) - (w*p_scale)/2, 450, // Y = 450
+                            w*p_scale, h*p_scale, 0);
+                    }
                     break;
                 case STATE_GAME_OVER_WIN:
                 case STATE_GAME_OVER_LOSE:
@@ -371,6 +434,7 @@ int main()
     obstacle_destroy(saw);
     obstacle_destroy(trophy);
     enemy_destroy(rhino);
+    enemy_destroy(bird);
     al_destroy_event_queue(queue);
     al_destroy_display(disp);
 
