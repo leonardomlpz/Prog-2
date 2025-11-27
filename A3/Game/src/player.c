@@ -12,7 +12,7 @@
 
 // Alturas da hitbox
 #define HEIGHT_STANDING 24
-#define HEIGHT_CROUCHING 14
+#define HEIGHT_CROUCHING 12
 
 Player* player_create(float start_x, float start_y) {
     Player* p = (Player*) malloc(sizeof(Player));
